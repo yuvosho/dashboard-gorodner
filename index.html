@@ -217,7 +217,33 @@
   .placeholder-panel .ph-sub { font-size: 12px; max-width: 320px; line-height: 1.7; }
 
   /* SECTION DIVIDER */
-  .section-gap { display: flex; flex-direction: column; gap: 14px; }
+  /* GRIDS ESPECIALES */
+  .middle-wide { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
+  .middle-full { display: flex; flex-direction: column; gap: 14px; }
+
+  /* TABLA RUBROS */
+  .rubro-header-row td { background: var(--sidebar-bg); font-weight: 700; font-size: 11.5px; color: var(--text); letter-spacing: 0.3px; }
+  .rubro-header-row td:first-child { color: var(--terra); font-size: 10.5px; }
+  tbody tr.rubro-header-row:last-child td { border-bottom: 1px solid var(--border); }
+
+  /* BADGES CASHFLOW */
+  .badge.cobrado  { background: var(--green-soft);   color: var(--green-dark); }
+  .badge.cobrado::before  { background: var(--green); }
+  .badge.pagado   { background: var(--taupe-soft);   color: var(--taupe); }
+  .badge.pagado::before   { background: var(--taupe); }
+  .badge.pendiente-cf { background: var(--mustard-soft); color: #997416; }
+  .badge.pendiente-cf::before { background: var(--mustard); }
+  .tipo-ingreso { color: var(--green-dark); font-weight: 600; }
+  .tipo-gasto   { color: var(--terra);      font-weight: 600; }
+
+  /* STAT CARDS (cashflow resumen lateral) */
+  .stat-list { display: flex; flex-direction: column; gap: 0; }
+  .stat-item { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  .stat-item:last-child { border-bottom: none; }
+  .stat-label { color: var(--text-muted); }
+  .stat-value { font-weight: 700; color: var(--text); }
+  .stat-value.pos { color: var(--green-dark); }
+  .stat-value.neg { color: var(--terra); }
 
   /* BUTTONS */
   .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
@@ -352,270 +378,12 @@
 
     <!-- ======= TAB: PRESUPUESTO ======= -->
     <div id="tab-presupuesto" class="tab-section">
-      <div class="demo-banner">
-        ⚠️ Vista previa del diseño — los datos reales se cargarán desde Excel
-      </div>
-
-      <div class="panel">
-        <div class="tab-header">
-          <div class="panel-title">Presupuesto</div>
-          <div class="obra-selector">
-            <span>Obra:</span>
-            <select id="sel-presupuesto">
-              <option value="">— Seleccionar obra —</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- KPIs del presupuesto -->
-        <div class="kpi-row-4" style="margin-bottom: 18px;">
-          <div class="kpi">
-            <div class="kpi-icon taupe">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-label">Total Presupuestado</span>
-              <span class="kpi-value">$ 18.500.000</span>
-              <span class="kpi-sub">Casa Olivos</span>
-            </div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon green">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-label">Ejecutado</span>
-              <span class="kpi-value">$ 10.850.000</span>
-              <span class="kpi-sub">69% del presupuesto</span>
-            </div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon terra">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H6"/></svg>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-label">Restante</span>
-              <span class="kpi-value">$ 7.650.000</span>
-              <span class="kpi-sub">31% del presupuesto</span>
-            </div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon green">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M21 12A9 9 0 0 0 12 3v9z" fill="currentColor" opacity="0.4"/></svg>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-label">% Avance</span>
-              <span class="kpi-value">69%</span>
-              <div class="progress"><span style="width:69%"></span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tabla de rubros -->
-        <table>
-          <thead>
-            <tr>
-              <th>Rubro</th>
-              <th>Presupuestado</th>
-              <th>Ejecutado</th>
-              <th>% Ejecución</th>
-              <th>Restante</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Estructura y fundaciones</td>
-              <td class="amount">$ 4.200.000</td>
-              <td class="amount">$ 3.800.000</td>
-              <td><div class="pct-cell"><div class="pct-bar"><span style="width:90%"></span></div><span class="pct-text">90%</span></div></td>
-              <td class="amount">$ 400.000</td>
-              <td><span class="badge curso">En curso</span></td>
-            </tr>
-            <tr>
-              <td>Instalaciones eléctricas</td>
-              <td class="amount">$ 1.800.000</td>
-              <td class="amount">$ 980.000</td>
-              <td><div class="pct-cell"><div class="pct-bar"><span class="mustard" style="width:54%"></span></div><span class="pct-text">54%</span></div></td>
-              <td class="amount">$ 820.000</td>
-              <td><span class="badge atencion">Atención</span></td>
-            </tr>
-            <tr>
-              <td>Instalaciones sanitarias</td>
-              <td class="amount">$ 1.500.000</td>
-              <td class="amount">$ 750.000</td>
-              <td><div class="pct-cell"><div class="pct-bar"><span class="mustard" style="width:50%"></span></div><span class="pct-text">50%</span></div></td>
-              <td class="amount">$ 750.000</td>
-              <td><span class="badge atencion">Atención</span></td>
-            </tr>
-            <tr>
-              <td>Terminaciones interiores</td>
-              <td class="amount">$ 3.200.000</td>
-              <td class="amount">$ 1.400.000</td>
-              <td><div class="pct-cell"><div class="pct-bar"><span style="width:44%"></span></div><span class="pct-text">44%</span></div></td>
-              <td class="amount">$ 1.800.000</td>
-              <td><span class="badge curso">En curso</span></td>
-            </tr>
-            <tr>
-              <td>Terminaciones exteriores</td>
-              <td class="amount">$ 2.100.000</td>
-              <td class="amount">$ 600.000</td>
-              <td><div class="pct-cell"><div class="pct-bar"><span style="width:29%"></span></div><span class="pct-text">29%</span></div></td>
-              <td class="amount">$ 1.500.000</td>
-              <td><span class="badge curso">En curso</span></td>
-            </tr>
-            <tr>
-              <td>Carpintería</td>
-              <td class="amount">$ 2.800.000</td>
-              <td class="amount muted">$ 0</td>
-              <td><div class="pct-cell"><div class="pct-bar"><span style="width:0%"></span></div><span class="pct-text">0%</span></div></td>
-              <td class="amount">$ 2.800.000</td>
-              <td><span class="badge curso">En curso</span></td>
-            </tr>
-            <tr>
-              <td>Dirección de obra</td>
-              <td class="amount">$ 2.900.000</td>
-              <td class="amount">$ 3.320.000</td>
-              <td><div class="pct-cell"><div class="pct-bar"><span class="terra" style="width:100%"></span></div><span class="pct-text" style="color:var(--terra)">115%</span></div></td>
-              <td class="amount" style="color:var(--terra)">–$ 420.000</td>
-              <td><span class="badge exceso">En exceso</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <div id="pres-root"></div>
     </div>
 
     <!-- ======= TAB: CASHFLOW ======= -->
     <div id="tab-cashflow" class="tab-section">
-      <div class="demo-banner">
-        ⚠️ Vista previa del diseño — los datos reales se cargarán desde Excel
-      </div>
-
-      <div class="panel">
-        <div class="tab-header">
-          <div class="panel-title">Cashflow</div>
-          <div class="obra-selector">
-            <span>Obra:</span>
-            <select id="sel-cashflow">
-              <option value="">— Seleccionar obra —</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- KPIs cashflow -->
-        <div class="kpi-row-4" style="margin-bottom: 18px;">
-          <div class="kpi">
-            <div class="kpi-icon green">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12l4 4v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="17" cy="13" r="1.4" fill="currentColor"/></svg>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-label">Saldo Actual</span>
-              <span class="kpi-value">$ 4.650.000</span>
-              <span class="kpi-sub up">Disponible</span>
-            </div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon green">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-label">Ingresos del Mes</span>
-              <span class="kpi-value">$ 2.800.000</span>
-              <span class="kpi-sub">Junio</span>
-            </div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon terra">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-label">Egresos del Mes</span>
-              <span class="kpi-value">$ 2.200.000</span>
-              <span class="kpi-sub">Junio</span>
-            </div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon taupe">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H6"/></svg>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-label">Balance del Mes</span>
-              <span class="kpi-value">$ 600.000</span>
-              <span class="kpi-sub up">+$ 600.000</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Gráfico cashflow barras -->
-        <div style="margin-bottom: 18px;">
-          <div style="font-size:10px; font-weight:700; letter-spacing:1px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">Ingresos vs Egresos por Mes</div>
-          <div class="chart-wrap">
-            <svg viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg">
-              <!-- Grid lines -->
-              <line x1="50" y1="10" x2="490" y2="10" stroke="#EDE5D8" stroke-width="1" stroke-dasharray="2 3"/>
-              <line x1="50" y1="50" x2="490" y2="50" stroke="#EDE5D8" stroke-width="1" stroke-dasharray="2 3"/>
-              <line x1="50" y1="90" x2="490" y2="90" stroke="#EDE5D8" stroke-width="1" stroke-dasharray="2 3"/>
-              <line x1="50" y1="130" x2="490" y2="130" stroke="#EDE5D8" stroke-width="1" stroke-dasharray="2 3"/>
-              <!-- Y labels -->
-              <text x="42" y="14" text-anchor="end" fill="#8A847E" font-size="9" font-family="inherit">4M</text>
-              <text x="42" y="54" text-anchor="end" fill="#8A847E" font-size="9" font-family="inherit">3M</text>
-              <text x="42" y="94" text-anchor="end" fill="#8A847E" font-size="9" font-family="inherit">2M</text>
-              <text x="42" y="134" text-anchor="end" fill="#8A847E" font-size="9" font-family="inherit">1M</text>
-              <!-- Barras Ene: ing 2.8M, egr 1.95M -->
-              <rect x="60"  y="60"  width="22" height="70" rx="3" fill="#8FA876" fill-opacity="0.85"/>
-              <rect x="84"  y="81"  width="22" height="49" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
-              <!-- Feb: ing 3.2, egr 2.1 -->
-              <rect x="130" y="50"  width="22" height="80" rx="3" fill="#8FA876" fill-opacity="0.85"/>
-              <rect x="154" y="77"  width="22" height="53" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
-              <!-- Mar: ing 2.5, egr 3.2 -->
-              <rect x="200" y="67"  width="22" height="63" rx="3" fill="#8FA876" fill-opacity="0.85"/>
-              <rect x="224" y="50"  width="22" height="80" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
-              <!-- Abr: ing 4.1, egr 2.8 -->
-              <rect x="270" y="37"  width="22" height="93" rx="3" fill="#8FA876" fill-opacity="0.85"/>
-              <rect x="294" y="60"  width="22" height="70" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
-              <!-- May: ing 3.9, egr 2.4 -->
-              <rect x="340" y="43"  width="22" height="87" rx="3" fill="#8FA876" fill-opacity="0.85"/>
-              <rect x="364" y="70"  width="22" height="60" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
-              <!-- Jun: ing 2.8, egr 2.2 -->
-              <rect x="410" y="60"  width="22" height="70" rx="3" fill="#8FA876" fill-opacity="0.85"/>
-              <rect x="434" y="75"  width="22" height="55" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
-              <!-- X labels -->
-              <text x="82"  y="148" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">Ene</text>
-              <text x="152" y="148" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">Feb</text>
-              <text x="222" y="148" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">Mar</text>
-              <text x="292" y="148" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">Abr</text>
-              <text x="362" y="148" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">May</text>
-              <text x="432" y="148" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">Jun</text>
-              <!-- Leyenda -->
-              <circle cx="60" cy="158" r="4" fill="#8FA876"/>
-              <text x="68" y="162" fill="#8A847E" font-size="9" font-family="inherit">Ingresos</text>
-              <circle cx="110" cy="158" r="4" fill="#C97B5B"/>
-              <text x="118" y="162" fill="#8A847E" font-size="9" font-family="inherit">Egresos</text>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Tabla mensual -->
-        <table>
-          <thead>
-            <tr>
-              <th>Mes</th>
-              <th>Ingresos</th>
-              <th>Egresos</th>
-              <th>Balance</th>
-              <th>Saldo Acumulado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Enero</td><td class="amount">$ 2.800.000</td><td class="amount">$ 1.950.000</td><td class="amount" style="color:var(--green-dark)">+$ 850.000</td><td class="amount">$ 850.000</td></tr>
-            <tr><td>Febrero</td><td class="amount">$ 3.200.000</td><td class="amount">$ 2.100.000</td><td class="amount" style="color:var(--green-dark)">+$ 1.100.000</td><td class="amount">$ 1.950.000</td></tr>
-            <tr><td>Marzo</td><td class="amount">$ 2.500.000</td><td class="amount">$ 3.200.000</td><td class="amount" style="color:var(--terra)">–$ 700.000</td><td class="amount">$ 1.250.000</td></tr>
-            <tr><td>Abril</td><td class="amount">$ 4.100.000</td><td class="amount">$ 2.800.000</td><td class="amount" style="color:var(--green-dark)">+$ 1.300.000</td><td class="amount">$ 2.550.000</td></tr>
-            <tr><td>Mayo</td><td class="amount">$ 3.900.000</td><td class="amount">$ 2.400.000</td><td class="amount" style="color:var(--green-dark)">+$ 1.500.000</td><td class="amount">$ 4.050.000</td></tr>
-            <tr><td>Junio</td><td class="amount">$ 2.800.000</td><td class="amount">$ 2.200.000</td><td class="amount" style="color:var(--green-dark)">+$ 600.000</td><td class="amount">$ 4.650.000</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div id="cf-root"></div>
     </div>
 
     <!-- ======= TAB: PROVEEDORES ======= -->
@@ -980,6 +748,331 @@ function poblarSelectores() {
 }
 
 // ============================================================
+// DATOS PRESUPUESTO  (estructura real del Excel)
+// ============================================================
+const PRES = {
+  obra:    'Av. Santa Fe 1970 Piso 4to A',
+  cliente: 'Analia Demonte',
+  rubros: [
+    { cod:'1-00',  desc:'TRABAJOS PRELIMINARES',              presupuestado:687750,   ejecutado:687750   },
+    { cod:'2-00',  desc:'DEMOLICIÓN Y ALBAÑILERÍA',           presupuestado:14192325, ejecutado:11211937 },
+    { cod:'3-00',  desc:'TABIQUERÍA DE DURLOCK',              presupuestado:2559375,  ejecutado:2098688  },
+    { cod:'4-00',  desc:'CIELORRASO DE DURLOCK',              presupuestado:2386125,  ejecutado:1789594  },
+    { cod:'5-00',  desc:'SOLADOS + REVESTIMIENTOS',           presupuestado:7412492,  ejecutado:4225120  },
+    { cod:'6-00',  desc:'PINTURA',                            presupuestado:7581000,  ejecutado:0        },
+    { cod:'7-00',  desc:'SANITARIAS',                         presupuestado:4114900,  ejecutado:3209622  },
+    { cod:'8-00',  desc:'INSTALACIÓN ELÉCTRICA',              presupuestado:5045250,  ejecutado:3783938  },
+    { cod:'9-00',  desc:'ARTEFACTOS ELÉCT. / ILUMINACIÓN',   presupuestado:6667000,  ejecutado:0        },
+    { cod:'10-00', desc:'AIRE ACONDICIONADO',                 presupuestado:1302000,  ejecutado:0        },
+    { cod:'11-00', desc:'CARPINTERÍA',                        presupuestado:10181750, ejecutado:0        },
+    { cod:'12-00', desc:'JOHNSON - COCINA',                   presupuestado:28391957, ejecutado:28391957 },
+    { cod:'13-00', desc:'ACCESORIOS',                         presupuestado:979700,   ejecutado:0        },
+    { cod:'14-00', desc:'VARIOS',                             presupuestado:787500,   ejecutado:346500   },
+    { cod:'15-00', desc:'GASTOS GENERALES (15%)',             presupuestado:14301112, ejecutado:0        },
+  ]
+};
+
+// ============================================================
+// DATOS CASHFLOW  (estructura real del Excel)
+// ============================================================
+const CF = {
+  saldoInicial: 0,
+  movimientos: [
+    { fecha:'2026-01-15', tipo:'Ingreso', rubro:'12-00', desc:'JOHNSON - COCINA',       proveedor:'Cliente',        monto:28391957, estado:'Cobrado'   },
+    { fecha:'2026-01-20', tipo:'Gasto',   rubro:'12-00', desc:'JOHNSON - COCINA',       proveedor:'Johnson S.A.',   monto:28391957, estado:'Pagado'    },
+    { fecha:'2026-02-05', tipo:'Ingreso', rubro:'2-00',  desc:'DEMOLICIÓN Y ALBAÑ.',    proveedor:'Cliente',        monto:7096162,  estado:'Cobrado'   },
+    { fecha:'2026-02-10', tipo:'Gasto',   rubro:'2-00',  desc:'DEMOLICIÓN Y ALBAÑ.',    proveedor:'Const. Morales', monto:5600000,  estado:'Pagado'    },
+    { fecha:'2026-02-15', tipo:'Gasto',   rubro:'1-00',  desc:'TRABAJOS PRELIMINARES',  proveedor:'Const. Morales', monto:687750,   estado:'Pagado'    },
+    { fecha:'2026-03-01', tipo:'Ingreso', rubro:'7-00',  desc:'SANITARIAS',             proveedor:'Cliente',        monto:2057450,  estado:'Cobrado'   },
+    { fecha:'2026-03-05', tipo:'Gasto',   rubro:'7-00',  desc:'SANITARIAS',             proveedor:'HidroSur',       monto:3209622,  estado:'Pagado'    },
+    { fecha:'2026-03-10', tipo:'Gasto',   rubro:'8-00',  desc:'INSTALACIÓN ELÉCTRICA',  proveedor:'ElectroPro',     monto:3783938,  estado:'Pagado'    },
+    { fecha:'2026-04-01', tipo:'Ingreso', rubro:'3-00',  desc:'TABIQUERÍA DURLOCK',     proveedor:'Cliente',        monto:2559375,  estado:'Cobrado'   },
+    { fecha:'2026-04-05', tipo:'Gasto',   rubro:'3-00',  desc:'TABIQUERÍA DURLOCK',     proveedor:'DryWall S.A.',   monto:2098688,  estado:'Pagado'    },
+    { fecha:'2026-04-10', tipo:'Gasto',   rubro:'4-00',  desc:'CIELORRASO DURLOCK',     proveedor:'DryWall S.A.',   monto:1789594,  estado:'Pagado'    },
+    { fecha:'2026-04-15', tipo:'Ingreso', rubro:'5-00',  desc:'SOLADOS Y REVESTIM.',    proveedor:'Cliente',        monto:3706246,  estado:'Cobrado'   },
+    { fecha:'2026-04-20', tipo:'Gasto',   rubro:'5-00',  desc:'SOLADOS Y REVESTIM.',    proveedor:'Pisos & Más',    monto:4225120,  estado:'Pagado'    },
+    { fecha:'2026-04-25', tipo:'Ingreso', rubro:'8-00',  desc:'INSTALACIÓN ELÉCTRICA',  proveedor:'Cliente',        monto:2522625,  estado:'Pendiente' },
+    { fecha:'2026-04-27', tipo:'Gasto',   rubro:'14-00', desc:'VARIOS',                 proveedor:'Varios',         monto:346500,   estado:'Pendiente' },
+  ]
+};
+
+// ============================================================
+// RENDER PRESUPUESTO
+// ============================================================
+function renderPresupuesto() {
+  const rubros    = PRES.rubros;
+  const totalPres = rubros.reduce((s, r) => s + r.presupuestado, 0);
+  const totalEjec = rubros.reduce((s, r) => s + r.ejecutado,     0);
+  const totalRest = totalPres - totalEjec;
+  const pctAvance = totalPres ? Math.round(totalEjec / totalPres * 100) : 0;
+
+  // --- Chart SVG (horizontal bars, presupuestado vs ejecutado) ---
+  const maxPres = Math.max(...rubros.map(r => r.presupuestado));
+  const rowH = 22, padTop = 4, wCode = 40, xBar = wCode + 4, wBarMax = 150, xPct = xBar + wBarMax + 4;
+  const svgW = xPct + 30;
+  const svgH = rubros.length * rowH + padTop * 2;
+
+  const chartRows = rubros.map((r, i) => {
+    const cy        = padTop + i * rowH + rowH / 2;
+    const pct       = r.presupuestado ? Math.round(r.ejecutado / r.presupuestado * 100) : 0;
+    const bwPres    = (r.presupuestado / maxPres * wBarMax).toFixed(1);
+    const bwEjec    = Math.min(r.ejecutado / maxPres * wBarMax, r.presupuestado / maxPres * wBarMax).toFixed(1);
+    const barFill   = pct >= 100 ? '#C97B5B' : pct > 0 ? '#8FA876' : '#C8C0B4';
+    return `<text x="${wCode - 2}" y="${cy + 3.5}" text-anchor="end" fill="#C97B5B" font-size="8.5" font-family="inherit" font-weight="700">${r.cod}</text>
+      <rect x="${xBar}" y="${cy - 7}" width="${bwPres}" height="11" rx="5.5" fill="#EDE5D8"/>
+      <rect x="${xBar}" y="${cy - 7}" width="${bwEjec}" height="11" rx="5.5" fill="${barFill}" fill-opacity="0.85"/>
+      <text x="${xPct}" y="${cy + 3.5}" fill="#8A847E" font-size="8.5" font-family="inherit">${pct}%</text>`;
+  }).join('');
+
+  // --- Rubros table rows ---
+  const tableRows = rubros.map(r => {
+    const pct     = r.presupuestado ? Math.round(r.ejecutado / r.presupuestado * 100) : 0;
+    const restante = r.presupuestado - r.ejecutado;
+    let estado, estadoLabel;
+    if (pct >= 100)     { estado = 'aldia';     estadoLabel = 'Completado'; }
+    else if (pct >= 50) { estado = 'curso';     estadoLabel = 'En curso';   }
+    else if (pct > 0)   { estado = 'atencion';  estadoLabel = 'Iniciado';   }
+    else                { estado = 'pendiente'; estadoLabel = 'Pendiente';  }
+    const barCls = pct >= 100 ? 'terra' : pct > 0 && pct < 50 ? 'mustard' : '';
+    return `<tr>
+      <td style="color:var(--terra);font-size:11px;font-weight:700;white-space:nowrap">${r.cod}</td>
+      <td>${r.desc}</td>
+      <td class="amount">${formatPeso(r.presupuestado)}</td>
+      <td class="amount">${r.ejecutado ? formatPeso(r.ejecutado) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td><div class="pct-cell"><div class="pct-bar"><span class="${barCls}" style="width:${Math.min(pct,100)}%"></span></div><span class="pct-text">${pct}%</span></div></td>
+      <td class="amount">${formatPeso(restante)}</td>
+      <td><span class="badge ${estado}">${estadoLabel}</span></td>
+    </tr>`;
+  }).join('');
+
+  // --- Obra selector ---
+  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
+    DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+
+  $('pres-root').innerHTML = `
+    <div class="demo-banner">⚠️ Vista previa del diseño — los datos reales se cargarán desde Excel</div>
+    <div class="kpi-row-4">
+      <div class="kpi">
+        <div class="kpi-icon taupe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Presupuestado</span>
+          <span class="kpi-value">${formatPeso(totalPres)}</span>
+          <span class="kpi-sub">${PRES.cliente}</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Ejecutado</span>
+          <span class="kpi-value">${formatPeso(totalEjec)}</span>
+          <span class="kpi-sub">${pctAvance}% del presupuesto</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon terra">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H6"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Restante</span>
+          <span class="kpi-value">${formatPeso(totalRest)}</span>
+          <span class="kpi-sub">${100 - pctAvance}% del presupuesto</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M21 12A9 9 0 0 0 12 3v9z" fill="currentColor" opacity="0.4"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">% Avance General</span>
+          <span class="kpi-value">${pctAvance}%</span>
+          <div class="progress"><span style="width:${pctAvance}%"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="middle-wide">
+      <div class="panel">
+        <div class="tab-header">
+          <div class="panel-title">Detalle por Rubro</div>
+          <div class="obra-selector"><span>Obra:</span><select id="sel-presupuesto">${obraOpts}</select></div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Cód.</th><th>Descripción</th><th>Presupuestado</th><th>Ejecutado</th><th>% Ejec.</th><th>Restante</th><th>Estado</th></tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Avance por Rubro</div>
+        <div class="chart-wrap">
+          <svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">${chartRows}</svg>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:16px;font-size:10px;">
+          <div style="display:flex;align-items:center;gap:5px;"><div style="width:12px;height:7px;border-radius:3px;background:#EDE5D8"></div><span style="color:var(--text-muted)">Presupuestado</span></div>
+          <div style="display:flex;align-items:center;gap:5px;"><div style="width:12px;height:7px;border-radius:3px;background:#8FA876"></div><span style="color:var(--text-muted)">Ejecutado</span></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// RENDER CASHFLOW
+// ============================================================
+function renderCashflow() {
+  const movs = CF.movimientos;
+
+  // Totals
+  const totalIngresos = movs.filter(m => m.tipo === 'Ingreso').reduce((s, m) => s + m.monto, 0);
+  const totalGastos   = movs.filter(m => m.tipo === 'Gasto'  ).reduce((s, m) => s + m.monto, 0);
+  const saldo         = CF.saldoInicial + totalIngresos - totalGastos;
+  const pendienteIng  = movs.filter(m => m.tipo === 'Ingreso' && m.estado === 'Pendiente').reduce((s, m) => s + m.monto, 0);
+  const pendienteGas  = movs.filter(m => m.tipo === 'Gasto'   && m.estado === 'Pendiente').reduce((s, m) => s + m.monto, 0);
+
+  // --- Group by month for chart ---
+  const byMonth = {};
+  movs.forEach(m => {
+    const mes = m.fecha.substring(0, 7);
+    if (!byMonth[mes]) byMonth[mes] = { ing: 0, gas: 0 };
+    if (m.tipo === 'Ingreso') byMonth[mes].ing += m.monto;
+    else                      byMonth[mes].gas += m.monto;
+  });
+  const meses = Object.keys(byMonth).sort();
+  const mesLabels = { '2026-01':'Ene','2026-02':'Feb','2026-03':'Mar','2026-04':'Abr','2026-05':'May','2026-06':'Jun' };
+
+  // --- Chart SVG (grouped bars) ---
+  const maxVal = Math.max(...meses.map(m => Math.max(byMonth[m].ing, byMonth[m].gas)));
+  const cW = 380, cH = 145, padL = 46, padR = 8, padT = 8, padB = 28;
+  const plotW = cW - padL - padR, plotH = cH - padT - padB;
+  const colW = plotW / meses.length, barW = colW * 0.34;
+
+  const gridLines = [0.25,0.5,0.75,1].map(s => {
+    const y = padT + plotH - s * plotH;
+    const lbl = (maxVal * s / 1000000).toFixed(0) + 'M';
+    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${cW-padR}" y2="${y.toFixed(1)}" stroke="#EDE5D8" stroke-width="1" stroke-dasharray="2 3"/>
+            <text x="${padL-4}" y="${(y+3.5).toFixed(1)}" text-anchor="end" fill="#8A847E" font-size="9" font-family="inherit">${lbl}</text>`;
+  }).join('');
+
+  const bars = meses.map((mes, i) => {
+    const cx   = padL + i * colW + colW / 2;
+    const ingH = byMonth[mes].ing / maxVal * plotH;
+    const gasH = byMonth[mes].gas / maxVal * plotH;
+    return `<rect x="${(cx-barW-1).toFixed(1)}" y="${(padT+plotH-ingH).toFixed(1)}" width="${barW.toFixed(1)}" height="${ingH.toFixed(1)}" rx="3" fill="#8FA876" fill-opacity="0.85"/>
+      <rect x="${(cx+1).toFixed(1)}" y="${(padT+plotH-gasH).toFixed(1)}" width="${barW.toFixed(1)}" height="${gasH.toFixed(1)}" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
+      <text x="${cx.toFixed(1)}" y="${(cH-padB+14).toFixed(1)}" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">${mesLabels[mes]||mes}</text>`;
+  }).join('');
+
+  const chart = `<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">
+    ${gridLines}${bars}
+    <circle cx="${padL}" cy="${cH-3}" r="4" fill="#8FA876"/>
+    <text x="${padL+8}" y="${cH+0.5}" fill="#8A847E" font-size="9" font-family="inherit">Ingresos</text>
+    <circle cx="${padL+65}" cy="${cH-3}" r="4" fill="#C97B5B"/>
+    <text x="${padL+73}" y="${cH+0.5}" fill="#8A847E" font-size="9" font-family="inherit">Gastos</text>
+  </svg>`;
+
+  // --- Stat list ---
+  const stats = [
+    { label:'Total Ingresos',   value:formatPeso(totalIngresos), cls:'pos' },
+    { label:'Total Gastos',     value:formatPeso(totalGastos),   cls:'neg' },
+    { label:'Saldo Neto',       value:formatPeso(saldo),         cls: saldo >= 0 ? 'pos' : 'neg' },
+    { label:'Ing. Pendientes',  value:formatPeso(pendienteIng),  cls:'' },
+    { label:'Gas. Pendientes',  value:formatPeso(pendienteGas),  cls:'neg' },
+  ];
+  const statHTML = stats.map(s =>
+    `<div class="stat-item"><span class="stat-label">${s.label}</span><span class="stat-value ${s.cls}">${s.value}</span></div>`
+  ).join('');
+
+  // --- Transactions table ---
+  const fmtF = f => { const [y,m,d] = f.split('-'); return `${d}/${m}/${y}`; };
+  const movRows = [...movs].reverse().map(m => {
+    const tipoCls   = m.tipo === 'Ingreso' ? 'tipo-ingreso' : 'tipo-gasto';
+    const estadoCls = m.estado === 'Cobrado' ? 'cobrado' : m.estado === 'Pagado' ? 'pagado' : 'pendiente-cf';
+    const signo     = m.tipo === 'Ingreso' ? '+' : '–';
+    const amtColor  = m.tipo === 'Ingreso' ? 'var(--green-dark)' : 'var(--terra)';
+    return `<tr>
+      <td style="white-space:nowrap;color:var(--text-muted)">${fmtF(m.fecha)}</td>
+      <td><span class="${tipoCls}">${m.tipo}</span></td>
+      <td style="color:var(--terra);font-size:11px;font-weight:700">${m.rubro}</td>
+      <td>${m.desc}</td>
+      <td style="color:var(--text-muted)">${m.proveedor}</td>
+      <td class="amount" style="color:${amtColor}">${signo}${formatPeso(m.monto)}</td>
+      <td><span class="badge ${estadoCls}">${m.estado}</span></td>
+    </tr>`;
+  }).join('');
+
+  // --- Obra selector ---
+  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
+    DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+
+  $('cf-root').innerHTML = `
+    <div class="demo-banner">⚠️ Vista previa del diseño — los datos reales se cargarán desde Excel</div>
+    <div class="kpi-row-4">
+      <div class="kpi">
+        <div class="kpi-icon ${saldo >= 0 ? 'green' : 'terra'}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12l4 4v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="17" cy="13" r="1.4" fill="currentColor"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Saldo Neto</span>
+          <span class="kpi-value">${formatPeso(saldo)}</span>
+          <span class="kpi-sub ${saldo >= 0 ? 'up' : 'down'}">${saldo >= 0 ? 'Positivo' : 'Negativo'}</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Ingresos</span>
+          <span class="kpi-value">${formatPeso(totalIngresos)}</span>
+          <span class="kpi-sub">${movs.filter(m => m.tipo==='Ingreso').length} movimientos</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon terra">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Gastos</span>
+          <span class="kpi-value">${formatPeso(totalGastos)}</span>
+          <span class="kpi-sub">${movs.filter(m => m.tipo==='Gasto').length} movimientos</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon taupe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Pendiente de Cobro</span>
+          <span class="kpi-value">${formatPeso(pendienteIng)}</span>
+          <span class="kpi-sub down">${formatPeso(pendienteGas)} por pagar</span>
+        </div>
+      </div>
+    </div>
+    <div class="middle-wide">
+      <div class="panel">
+        <div class="tab-header">
+          <div class="panel-title">Movimientos</div>
+          <div class="obra-selector"><span>Obra:</span><select id="sel-cashflow">${obraOpts}</select></div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Tipo</th><th>Rubro</th><th>Descripción</th><th>Proveedor</th><th>Monto</th><th>Estado</th></tr>
+          </thead>
+          <tbody>${movRows}</tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Ingresos vs Gastos por Mes</div>
+        <div class="chart-wrap" style="margin-bottom:14px;">${chart}</div>
+        <div class="stat-list">${statHTML}</div>
+      </div>
+    </div>`;
+}
+
+// ============================================================
 // RENDER TODO
 // ============================================================
 function renderAll() {
@@ -988,6 +1081,8 @@ function renderAll() {
   renderTabla('tbody-obras');
   renderGrafico();
   renderKpiBottom();
+  renderPresupuesto();
+  renderCashflow();
   poblarSelectores();
 }
 
