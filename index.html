@@ -311,34 +311,32 @@
       Dashboard
     </a>
 
-    <a class="nav-item" data-tab="obras">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
-      </svg>
-      Obras
-    </a>
-
     <!-- Grupo: Finanzas -->
     <div class="nav-group-label">Finanzas</div>
 
-    <a class="nav-item" data-tab="costos">
+    <a class="nav-item" data-tab="presupuesto">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2v20M17 6H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H6"/>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="12" y1="17" x2="8" y2="17"/>
+        <line x1="16" y1="9" x2="8" y2="9"/>
       </svg>
-      Costos
+      Presupuesto
     </a>
 
-    <a class="nav-item" data-tab="ingresos">
+    <a class="nav-item" data-tab="cashflow">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-        <polyline points="17 6 23 6 23 12"/>
+        <path d="M17 3l4 4-4 4"/><path d="M3 7h18"/>
+        <path d="M7 21l-4-4 4-4"/><path d="M21 17H3"/>
       </svg>
-      Ingresos
+      Cashflow
     </a>
 
     <a class="nav-item" data-tab="flujocaja">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 3l4 4-4 4"/><path d="M3 7h18"/><path d="M7 21l-4-4 4-4"/><path d="M21 17H3"/>
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
       </svg>
       Flujo de Caja
     </a>
@@ -363,14 +361,6 @@
         <line x1="10" y1="9" x2="8" y2="9"/>
       </svg>
       Reportes
-    </a>
-
-    <a class="nav-item" data-tab="configuracion">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-      Configuración
     </a>
 
     <!-- Footer -->
@@ -421,44 +411,21 @@
       <div id="kpi-bottom" class="kpi-row"></div>
     </div>
 
-    <!-- ======= TAB: OBRAS ======= -->
-    <div id="tab-obras" class="tab-section">
-      <div class="panel">
-        <div class="tab-header">
-          <div class="panel-title">Todas las Obras</div>
-          <button class="btn btn-green" onclick="document.getElementById('excel-obras').click()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Cargar Excel
-          </button>
-          <input type="file" id="excel-obras" accept=".xlsx,.xls" onchange="handleExcel(this.files[0])">
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Obra</th><th>Cliente</th><th>Presupuesto</th>
-              <th>Costo Real</th><th>% Ejecución</th><th>Resultado</th><th>Estado</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-obras"></tbody>
-        </table>
+    <!-- ======= TAB: PRESUPUESTO ======= -->
+    <div id="tab-presupuesto" class="tab-section">
+      <div class="placeholder">
+        <div class="placeholder-icon">📄</div>
+        <div class="placeholder-title">Presupuesto</div>
+        <div class="placeholder-sub">Confección y seguimiento de presupuestos por obra, ítems y versiones. Próximamente.</div>
       </div>
     </div>
 
-    <!-- ======= TAB: COSTOS ======= -->
-    <div id="tab-costos" class="tab-section">
+    <!-- ======= TAB: CASHFLOW ======= -->
+    <div id="tab-cashflow" class="tab-section">
       <div class="placeholder">
-        <div class="placeholder-icon">📊</div>
-        <div class="placeholder-title">Costos</div>
-        <div class="placeholder-sub">Desglose de costos por obra, categoría y período. Próximamente.</div>
-      </div>
-    </div>
-
-    <!-- ======= TAB: INGRESOS ======= -->
-    <div id="tab-ingresos" class="tab-section">
-      <div class="placeholder">
-        <div class="placeholder-icon">💰</div>
-        <div class="placeholder-title">Ingresos</div>
-        <div class="placeholder-sub">Registro de cobros, facturación y proyección de ingresos por obra. Próximamente.</div>
+        <div class="placeholder-icon">💵</div>
+        <div class="placeholder-title">Cashflow</div>
+        <div class="placeholder-sub">Proyección de ingresos y egresos por período, saldo acumulado y alertas. Próximamente.</div>
       </div>
     </div>
 
@@ -489,38 +456,6 @@
       </div>
     </div>
 
-    <!-- ======= TAB: CONFIGURACIÓN ======= -->
-    <div id="tab-configuracion" class="tab-section">
-      <div class="config-card">
-        <div class="panel-title">Vincular datos desde Excel</div>
-        <div class="config-section">
-          <p class="config-desc">Cargá tu archivo Excel y el dashboard se actualiza automáticamente. El archivo debe tener las siguientes hojas con los encabezados exactos indicados abajo.</p>
-          <div class="format-box">
-            <strong>Hoja "Obras" — obligatoria</strong>
-            <code>Obra &nbsp;|&nbsp; Cliente &nbsp;|&nbsp; Presupuesto &nbsp;|&nbsp; Costo Real &nbsp;|&nbsp; % Ejecución &nbsp;|&nbsp; Estado</code>
-          </div>
-          <div class="format-box">
-            <strong>Hoja "KPIs" — opcional</strong>
-            <code>Ingresos Totales &nbsp;|&nbsp; Costos Totales &nbsp;|&nbsp; Saldo de Caja</code>
-          </div>
-          <p class="format-note">En la columna <strong>Estado</strong> usá: <em>En curso</em>, <em>En exceso</em> o <em>Atención</em>.<br>Los montos van sin símbolo $, solo el número (ej: 18500000).</p>
-        </div>
-        <div class="config-section">
-          <div class="btn-row">
-            <button class="btn btn-green" onclick="document.getElementById('excel-config').click()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Cargar archivo Excel
-            </button>
-            <button class="btn btn-taupe" onclick="descargarPlantilla()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Descargar plantilla Excel
-            </button>
-          </div>
-          <input type="file" id="excel-config" accept=".xlsx,.xls" onchange="handleExcel(this.files[0])">
-          <div id="config-success" class="success-msg"></div>
-        </div>
-      </div>
-    </div>
 
   </main>
 </div>
@@ -567,14 +502,12 @@ function formatPeso(n) {
 const ESTADO_LABEL = { curso: 'En curso', exceso: 'En exceso', atencion: 'Atención' };
 
 const TAB_NAMES = {
-  dashboard:     'Dashboard',
-  obras:         'Obras',
-  costos:        'Costos',
-  ingresos:      'Ingresos',
-  flujocaja:     'Flujo de Caja',
-  proveedores:   'Proveedores',
-  reportes:      'Reportes',
-  configuracion: 'Configuración'
+  dashboard:   'Dashboard',
+  presupuesto: 'Presupuesto',
+  cashflow:    'Cashflow',
+  flujocaja:   'Flujo de Caja',
+  proveedores: 'Proveedores',
+  reportes:    'Reportes'
 };
 
 function mapEstado(s) {
