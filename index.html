@@ -269,9 +269,55 @@
   .success-msg { color: var(--green-dark); font-size: 12.5px; margin-top: 12px; display: none; font-weight: 600; }
   .success-msg.visible { display: block; }
 
-  /* OBRAS TAB */
+  /* TAB HEADER */
   .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
   .tab-header .panel-title { margin-bottom: 0; }
+
+  /* SELECTOR DE OBRA */
+  .obra-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .obra-selector select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 28px 6px 10px;
+    font-size: 12.5px;
+    color: var(--text);
+    background: var(--bg);
+    cursor: pointer;
+    font-family: inherit;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A847E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 0.15s;
+    min-width: 200px;
+  }
+  .obra-selector select:focus { border-color: var(--terra); }
+
+  /* PLACEHOLDER DENTRO DE PANEL */
+  .placeholder-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 50px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .placeholder-panel .placeholder-icon { font-size: 34px; opacity: 0.45; }
+  .placeholder-panel .placeholder-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .placeholder-panel .placeholder-sub { font-size: 12px; max-width: 320px; line-height: 1.7; }
 
   /* RESPONSIVE */
   @media (max-width: 1100px) {
@@ -309,6 +355,13 @@
         <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
       </svg>
       Dashboard
+    </a>
+
+    <a class="nav-item" data-tab="obras">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+      </svg>
+      Obras
     </a>
 
     <!-- Grupo: Finanzas -->
@@ -403,30 +456,79 @@
       <div id="kpi-bottom" class="kpi-row"></div>
     </div>
 
+    <!-- ======= TAB: OBRAS ======= -->
+    <div id="tab-obras" class="tab-section">
+      <div class="panel">
+        <div class="panel-title">Todas las Obras</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Obra</th><th>Cliente</th><th>Presupuesto</th>
+              <th>Costo Real</th><th>% Ejecución</th><th>Resultado</th><th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-obras"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ======= TAB: PRESUPUESTO ======= -->
     <div id="tab-presupuesto" class="tab-section">
-      <div class="placeholder">
-        <div class="placeholder-icon">📄</div>
-        <div class="placeholder-title">Presupuesto</div>
-        <div class="placeholder-sub">Confección y seguimiento de presupuestos por obra, ítems y versiones. Próximamente.</div>
+      <div class="panel">
+        <div class="tab-header">
+          <div class="panel-title">Presupuesto</div>
+          <div class="obra-selector">
+            <span>Obra:</span>
+            <select id="sel-presupuesto">
+              <option value="">— Seleccionar obra —</option>
+            </select>
+          </div>
+        </div>
+        <div class="placeholder-panel">
+          <div class="placeholder-icon">📄</div>
+          <div class="placeholder-title">Seleccioná una obra para ver su presupuesto</div>
+          <div class="placeholder-sub">El detalle de ítems, versiones y comparativas se mostrará aquí. Próximamente.</div>
+        </div>
       </div>
     </div>
 
     <!-- ======= TAB: CASHFLOW ======= -->
     <div id="tab-cashflow" class="tab-section">
-      <div class="placeholder">
-        <div class="placeholder-icon">💵</div>
-        <div class="placeholder-title">Cashflow</div>
-        <div class="placeholder-sub">Proyección de ingresos y egresos por período, saldo acumulado y alertas. Próximamente.</div>
+      <div class="panel">
+        <div class="tab-header">
+          <div class="panel-title">Cashflow</div>
+          <div class="obra-selector">
+            <span>Obra:</span>
+            <select id="sel-cashflow">
+              <option value="">— Seleccionar obra —</option>
+            </select>
+          </div>
+        </div>
+        <div class="placeholder-panel">
+          <div class="placeholder-icon">💵</div>
+          <div class="placeholder-title">Seleccioná una obra para ver su cashflow</div>
+          <div class="placeholder-sub">Proyección de ingresos y egresos por período, saldo acumulado y alertas. Próximamente.</div>
+        </div>
       </div>
     </div>
 
     <!-- ======= TAB: PROVEEDORES ======= -->
     <div id="tab-proveedores" class="tab-section">
-      <div class="placeholder">
-        <div class="placeholder-icon">🏗️</div>
-        <div class="placeholder-title">Proveedores</div>
-        <div class="placeholder-sub">Base de proveedores, historial de pagos y evaluación de performance. Próximamente.</div>
+      <div class="panel">
+        <div class="tab-header">
+          <div class="panel-title">Proveedores</div>
+          <div class="obra-selector">
+            <span>Obra:</span>
+            <select id="sel-proveedores">
+              <option value="">— Seleccionar obra —</option>
+            </select>
+          </div>
+        </div>
+        <div class="placeholder-panel">
+          <div class="placeholder-icon">🏗️</div>
+          <div class="placeholder-title">Seleccioná una obra para ver sus proveedores</div>
+          <div class="placeholder-sub">Base de proveedores, historial de pagos y evaluación de performance. Próximamente.</div>
+        </div>
       </div>
     </div>
 
@@ -486,6 +588,7 @@ const ESTADO_LABEL = { curso: 'En curso', exceso: 'En exceso', atencion: 'Atenci
 
 const TAB_NAMES = {
   dashboard:   'Dashboard',
+  obras:       'Obras',
   presupuesto: 'Presupuesto',
   cashflow:    'Cashflow',
   proveedores: 'Proveedores',
@@ -695,6 +798,20 @@ function renderGrafico() {
 }
 
 // ============================================================
+// POBLAR SELECTORES DE OBRA
+// ============================================================
+function poblarSelectores() {
+  const opciones = DATOS.obras.map(o =>
+    `<option value="${o.nombre}">${o.nombre}</option>`
+  ).join('');
+  const base = '<option value="">— Seleccionar obra —</option>' + opciones;
+  ['sel-presupuesto', 'sel-cashflow', 'sel-proveedores'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = base;
+  });
+}
+
+// ============================================================
 // RENDER TODO
 // ============================================================
 function renderAll() {
@@ -703,6 +820,7 @@ function renderAll() {
   renderTabla('tbody-obras');
   renderGrafico();
   renderKpiBottom();
+  poblarSelectores();
 }
 
 // ============================================================
