@@ -30,6 +30,7 @@
     font-size: 13px;
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
+    height: 100%;
   }
   .layout {
     display: grid;
@@ -40,19 +41,96 @@
   /* ======= SIDEBAR ======= */
   .sidebar {
     background: var(--sidebar-bg);
-    padding: 28px 24px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    padding: 24px 16px;
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
   }
-  .leaf { width: 64px; height: 64px; color: var(--green); opacity: 0.85; }
-  .sidebar-title { font-size: 14px; font-weight: 700; letter-spacing: 1px; color: var(--text); line-height: 1.5; }
-  .sidebar-divider { width: 36px; height: 1px; background: var(--text-muted); opacity: 0.4; }
-  .sidebar-bullets { list-style: none; display: flex; flex-direction: column; gap: 14px; color: var(--text); font-size: 12.5px; }
-  .sidebar-bullets li { position: relative; padding-left: 14px; }
-  .sidebar-bullets li::before { content: "·"; position: absolute; left: 0; top: -2px; font-size: 18px; color: var(--text); }
-  .sidebar-spacer { flex: 1; }
-  .leaf-bottom { color: var(--green); opacity: 0.7; width: 80px; height: 80px; }
+
+  /* Logo */
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .sidebar-logo svg {
+    width: 30px;
+    height: 30px;
+    color: var(--green);
+    flex-shrink: 0;
+  }
+  .sidebar-brand-name {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .sidebar-brand-sub {
+    font-size: 8.5px;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  /* Nav group label */
+  .nav-group-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 14px 10px 4px;
+  }
+
+  /* Nav items */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 7px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .nav-item svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    stroke: currentColor;
+  }
+  .nav-item:hover {
+    background: var(--taupe-soft);
+    color: var(--text);
+  }
+  .nav-item.active {
+    background: var(--terra-soft);
+    color: var(--terra);
+    font-weight: 600;
+  }
+
+  /* Sidebar footer */
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 10px 4px;
+    border-top: 1px solid var(--border);
+    font-size: 10.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
 
   /* ======= MAIN ======= */
   .main {
@@ -64,24 +142,26 @@
   }
 
   /* TOPBAR */
-  .topbar { display: flex; align-items: center; gap: 28px; padding-bottom: 4px; }
-  .brand { display: flex; flex-direction: column; }
-  .brand-name { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 22px; color: var(--text); line-height: 1; }
-  .brand-sub { font-size: 9.5px; letter-spacing: 1.2px; color: var(--text-muted); margin-top: 4px; }
-  .nav { display: flex; gap: 22px; flex: 1; margin-left: 14px; flex-wrap: wrap; }
-  .nav a {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: 13px;
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding-bottom: 4px;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: color 0.15s;
-    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
   }
-  .nav a:hover { color: var(--text); }
-  .nav a.active { color: var(--terra); border-bottom-color: var(--terra); }
-  .legend { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; color: var(--text-muted); flex-shrink: 0; }
+  .page-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
   .legend-item { display: flex; align-items: center; gap: 6px; }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
   .legend-dot.green { background: var(--green); }
@@ -205,30 +285,99 @@
 
   <!-- ======= SIDEBAR ======= -->
   <aside class="sidebar">
-    <svg class="leaf" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M10 54 C 10 28, 30 8, 56 8 C 56 34, 36 54, 10 54 Z" stroke="currentColor" stroke-width="1.6" fill="none"/>
-      <path d="M12 52 C 24 38, 40 24, 54 12" stroke="currentColor" stroke-width="1.4" fill="none"/>
-      <path d="M22 44 C 26 40, 30 36, 34 32" stroke="currentColor" stroke-width="1" fill="none"/>
-      <path d="M32 36 C 36 32, 40 28, 44 24" stroke="currentColor" stroke-width="1" fill="none"/>
-      <path d="M14 46 C 18 42, 22 38, 26 34" stroke="currentColor" stroke-width="1" fill="none"/>
-    </svg>
-    <div>
-      <div class="sidebar-title">CREATIVO / DISEÑO<br>ESTUDIO BOUTIQUE</div>
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M10 54 C 10 28, 30 8, 56 8 C 56 34, 36 54, 10 54 Z" stroke="currentColor" stroke-width="1.6" fill="none"/>
+        <path d="M12 52 C 24 38, 40 24, 54 12" stroke="currentColor" stroke-width="1.4" fill="none"/>
+        <path d="M22 44 C 26 40, 30 36, 34 32" stroke="currentColor" stroke-width="1" fill="none"/>
+        <path d="M32 36 C 36 32, 40 28, 44 24" stroke="currentColor" stroke-width="1" fill="none"/>
+      </svg>
+      <div>
+        <div class="sidebar-brand-name">estudioarq.</div>
+        <div class="sidebar-brand-sub">Control de Obras</div>
+      </div>
     </div>
-    <div class="sidebar-divider"></div>
-    <ul class="sidebar-bullets">
-      <li>Colores cálidos y naturales</li>
-      <li>Estilo más creativo y moderno</li>
-      <li>Cercano y femenino</li>
-      <li>Ideal para estudios de arquitectura y diseño</li>
-    </ul>
-    <div class="sidebar-spacer"></div>
-    <svg class="leaf-bottom" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M14 70 C 14 36, 38 12, 70 12 C 70 44, 46 70, 14 70 Z" stroke="currentColor" stroke-width="1.4" fill="none"/>
-      <path d="M16 68 C 30 50, 50 32, 68 16" stroke="currentColor" stroke-width="1.2" fill="none"/>
-      <path d="M28 58 C 34 52, 40 46, 46 40" stroke="currentColor" stroke-width="0.9" fill="none"/>
-      <path d="M40 50 C 46 44, 52 38, 58 32" stroke="currentColor" stroke-width="0.9" fill="none"/>
-    </svg>
+
+    <!-- Grupo: Principal -->
+    <div class="nav-group-label">Principal</div>
+
+    <a class="nav-item active" data-tab="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </a>
+
+    <a class="nav-item" data-tab="obras">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+      </svg>
+      Obras
+    </a>
+
+    <!-- Grupo: Finanzas -->
+    <div class="nav-group-label">Finanzas</div>
+
+    <a class="nav-item" data-tab="costos">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2v20M17 6H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H6"/>
+      </svg>
+      Costos
+    </a>
+
+    <a class="nav-item" data-tab="ingresos">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
+      </svg>
+      Ingresos
+    </a>
+
+    <a class="nav-item" data-tab="flujocaja">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 3l4 4-4 4"/><path d="M3 7h18"/><path d="M7 21l-4-4 4-4"/><path d="M21 17H3"/>
+      </svg>
+      Flujo de Caja
+    </a>
+
+    <!-- Grupo: Administración -->
+    <div class="nav-group-label">Administración</div>
+
+    <a class="nav-item" data-tab="proveedores">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Proveedores
+    </a>
+
+    <a class="nav-item" data-tab="reportes">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        <line x1="10" y1="9" x2="8" y2="9"/>
+      </svg>
+      Reportes
+    </a>
+
+    <a class="nav-item" data-tab="configuracion">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      Configuración
+    </a>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      estudioarq. © 2025
+    </div>
+
   </aside>
 
   <!-- ======= MAIN ======= -->
@@ -236,20 +385,7 @@
 
     <!-- TOPBAR -->
     <div class="topbar">
-      <div class="brand">
-        <span class="brand-name">estudioarq.</span>
-        <span class="brand-sub">CONTROL DE OBRAS</span>
-      </div>
-      <nav class="nav">
-        <a href="#" class="active" data-tab="dashboard">dashboard</a>
-        <a href="#" data-tab="obras">obras</a>
-        <a href="#" data-tab="costos">costos</a>
-        <a href="#" data-tab="ingresos">ingresos</a>
-        <a href="#" data-tab="flujocaja">flujo de caja</a>
-        <a href="#" data-tab="proveedores">proveedores</a>
-        <a href="#" data-tab="reportes">reportes</a>
-        <a href="#" data-tab="configuracion">configuración</a>
-      </nav>
+      <div class="page-title" id="page-title">Dashboard</div>
       <div class="legend">
         <div class="legend-item"><span class="legend-dot green"></span>Ingresos</div>
         <div class="legend-item"><span class="legend-dot terra"></span>Costos</div>
@@ -299,13 +435,8 @@
         <table>
           <thead>
             <tr>
-              <th>Obra</th>
-              <th>Cliente</th>
-              <th>Presupuesto</th>
-              <th>Costo Real</th>
-              <th>% Ejecución</th>
-              <th>Resultado</th>
-              <th>Estado</th>
+              <th>Obra</th><th>Cliente</th><th>Presupuesto</th>
+              <th>Costo Real</th><th>% Ejecución</th><th>Resultado</th><th>Estado</th>
             </tr>
           </thead>
           <tbody id="tbody-obras"></tbody>
@@ -318,7 +449,7 @@
       <div class="placeholder">
         <div class="placeholder-icon">📊</div>
         <div class="placeholder-title">Costos</div>
-        <div class="placeholder-sub">Esta sección mostrará el desglose de costos por obra, categoría y período. Próximamente.</div>
+        <div class="placeholder-sub">Desglose de costos por obra, categoría y período. Próximamente.</div>
       </div>
     </div>
 
@@ -362,30 +493,18 @@
     <div id="tab-configuracion" class="tab-section">
       <div class="config-card">
         <div class="panel-title">Vincular datos desde Excel</div>
-
         <div class="config-section">
-          <p class="config-desc">
-            Cargá tu archivo Excel y el dashboard se actualiza automáticamente. El archivo debe tener
-            las siguientes hojas con los encabezados exactos indicados abajo.
-          </p>
-
+          <p class="config-desc">Cargá tu archivo Excel y el dashboard se actualiza automáticamente. El archivo debe tener las siguientes hojas con los encabezados exactos indicados abajo.</p>
           <div class="format-box">
             <strong>Hoja "Obras" — obligatoria</strong>
             <code>Obra &nbsp;|&nbsp; Cliente &nbsp;|&nbsp; Presupuesto &nbsp;|&nbsp; Costo Real &nbsp;|&nbsp; % Ejecución &nbsp;|&nbsp; Estado</code>
           </div>
-
           <div class="format-box">
             <strong>Hoja "KPIs" — opcional</strong>
             <code>Ingresos Totales &nbsp;|&nbsp; Costos Totales &nbsp;|&nbsp; Saldo de Caja</code>
           </div>
-
-          <p class="format-note">
-            En la columna <strong>Estado</strong> usá exactamente uno de estos valores:
-            <em>En curso</em>, <em>En exceso</em> o <em>Atención</em>.<br>
-            Los montos van sin símbolo $, solo el número (ej: 18500000).
-          </p>
+          <p class="format-note">En la columna <strong>Estado</strong> usá: <em>En curso</em>, <em>En exceso</em> o <em>Atención</em>.<br>Los montos van sin símbolo $, solo el número (ej: 18500000).</p>
         </div>
-
         <div class="config-section">
           <div class="btn-row">
             <button class="btn btn-green" onclick="document.getElementById('excel-config').click()">
@@ -406,14 +525,11 @@
   </main>
 </div>
 
-<!-- SheetJS para leer y escribir Excel -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 
 // ============================================================
-// DATOS — acá viven todos los números del dashboard.
-// Cuando se carga un Excel, estos valores se reemplazan
-// automáticamente y todo se recalcula.
+// DATOS
 // ============================================================
 const DATOS = {
   kpis: {
@@ -425,17 +541,17 @@ const DATOS = {
     varResultado:  "+20%"
   },
   obras: [
-    { nombre: "Casa Olivos",              cliente: "Fam. Gómez",               presupuesto: 18500000, costoReal: 12850000, ejecucion: 69, estado: "curso"    },
-    { nombre: "Oficinas Belgrano",         cliente: "Belgrano Corp.",           presupuesto: 26000000, costoReal: 17600000, ejecucion: 68, estado: "curso"    },
+    { nombre: "Casa Olivos",              cliente: "Fam. Gómez",                presupuesto: 18500000, costoReal: 12850000, ejecucion: 69, estado: "curso"    },
+    { nombre: "Oficinas Belgrano",         cliente: "Belgrano Corp.",            presupuesto: 26000000, costoReal: 17600000, ejecucion: 68, estado: "curso"    },
     { nombre: "Local Comercial Nordelta",  cliente: "Emprendimientos del Norte", presupuesto:  9800000, costoReal:  6500000, ejecucion: 66, estado: "exceso"   },
-    { nombre: "Vivienda Los Alisos",       cliente: "Fam. Rodríguez",           presupuesto: 15200000, costoReal:  9900000, ejecucion: 70, estado: "curso"    },
-    { nombre: "Remodelación Palermo",      cliente: "Estudio Jurídico Lex",     presupuesto:  6400000, costoReal:  4100000, ejecucion: 64, estado: "atencion" },
-    { nombre: "Casa Pilar",               cliente: "Fam. Santoro",             presupuesto: 22000000, costoReal: 13800000, ejecucion: 63, estado: "curso"    }
+    { nombre: "Vivienda Los Alisos",       cliente: "Fam. Rodríguez",            presupuesto: 15200000, costoReal:  9900000, ejecucion: 70, estado: "curso"    },
+    { nombre: "Remodelación Palermo",      cliente: "Estudio Jurídico Lex",      presupuesto:  6400000, costoReal:  4100000, ejecucion: 64, estado: "atencion" },
+    { nombre: "Casa Pilar",               cliente: "Fam. Santoro",              presupuesto: 22000000, costoReal: 13800000, ejecucion: 63, estado: "curso"    }
   ],
   grafico: {
     meses:    ["Ene", "Feb", "Mar", "Abr", "May", "Jun"],
-    ingresos: [8, 15, 22, 28, 33, 40],   // millones acumulados
-    costos:   [4,  9, 13, 17, 22, 27]    // millones acumulados
+    ingresos: [8, 15, 22, 28, 33, 40],
+    costos:   [4,  9, 13, 17, 22, 27]
   }
 };
 
@@ -450,6 +566,17 @@ function formatPeso(n) {
 
 const ESTADO_LABEL = { curso: 'En curso', exceso: 'En exceso', atencion: 'Atención' };
 
+const TAB_NAMES = {
+  dashboard:     'Dashboard',
+  obras:         'Obras',
+  costos:        'Costos',
+  ingresos:      'Ingresos',
+  flujocaja:     'Flujo de Caja',
+  proveedores:   'Proveedores',
+  reportes:      'Reportes',
+  configuracion: 'Configuración'
+};
+
 function mapEstado(s) {
   s = (s || '').toLowerCase();
   if (s.includes('exceso')) return 'exceso';
@@ -458,7 +585,7 @@ function mapEstado(s) {
 }
 
 // ============================================================
-// CALCULAR TOTALES DESDE LA TABLA DE OBRAS
+// CALCULAR TOTALES
 // ============================================================
 function calcularTotales() {
   const obras = DATOS.obras;
@@ -472,13 +599,12 @@ function calcularTotales() {
 }
 
 // ============================================================
-// RENDER — KPIs FILA SUPERIOR
+// RENDER KPIs TOP
 // ============================================================
 function renderKpiTop() {
   const k = DATOS.kpis;
   const c = calcularTotales();
   const resultado = k.ingresosTotales - k.costosTotales;
-
   $('kpi-top').innerHTML = `
     <div class="kpi">
       <div class="kpi-icon green">
@@ -529,19 +655,17 @@ function renderKpiTop() {
         <span class="kpi-value">${formatPeso(k.saldoCaja)}</span>
         <span class="kpi-sub">Disponible</span>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ============================================================
-// RENDER — KPIs FILA INFERIOR (calculados desde obras)
+// RENDER KPIs BOTTOM
 // ============================================================
 function renderKpiBottom() {
   const c = calcularTotales();
-  const resultado  = c.totalPresupuestado - c.totalCostoReal;
-  const pctCosto   = c.totalPresupuestado ? Math.round((c.totalCostoReal / c.totalPresupuestado) * 100) : 0;
-  const pctResult  = c.totalPresupuestado ? Math.round((resultado        / c.totalPresupuestado) * 100) : 0;
-
+  const resultado = c.totalPresupuestado - c.totalCostoReal;
+  const pctCosto  = c.totalPresupuestado ? Math.round((c.totalCostoReal / c.totalPresupuestado) * 100) : 0;
+  const pctResult = c.totalPresupuestado ? Math.round((resultado        / c.totalPresupuestado) * 100) : 0;
   $('kpi-bottom').innerHTML = `
     <div class="kpi">
       <div class="kpi-icon taupe">
@@ -592,12 +716,11 @@ function renderKpiBottom() {
         <span class="kpi-value">${formatPeso(DATOS.kpis.saldoCaja)}</span>
         <span class="kpi-sub">Disponible</span>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ============================================================
-// RENDER — TABLA DE OBRAS (reutilizable para dos pestañas)
+// RENDER TABLA
 // ============================================================
 function renderTabla(tbodyId) {
   $(tbodyId).innerHTML = DATOS.obras.map(o => {
@@ -620,60 +743,44 @@ function renderTabla(tbodyId) {
 }
 
 // ============================================================
-// RENDER — GRÁFICO SVG (generado desde los datos)
+// RENDER GRÁFICO
 // ============================================================
 function renderGrafico() {
   const { meses, ingresos, costos } = DATOS.grafico;
   const n = meses.length;
   if (n === 0) { $('grafico-wrap').innerHTML = ''; return; }
-
-  const xS = 50, xE = 480, yS = 210, yT = 10;
-  const pH    = yS - yT;
-  const xStep = n > 1 ? (xE - xS) / (n - 1) : 0;
-  const maxRaw = Math.max(...ingresos, ...costos);
-  const maxVal = Math.ceil(maxRaw / 10) * 10 || 10;
-
+  const xS = 50, xE = 480, yS = 210, yT = 10, pH = yS - yT;
+  const xStep  = n > 1 ? (xE - xS) / (n - 1) : 0;
+  const maxVal = Math.ceil(Math.max(...ingresos, ...costos) / 10) * 10 || 10;
   const xOf = i => xS + i * xStep;
   const yOf = v => yS - (v / maxVal) * pH;
-
   let grid = '', yLabels = '';
   for (let i = 0; i <= 5; i++) {
-    const v = (maxVal / 5) * i;
-    const y = yOf(v);
+    const v = (maxVal / 5) * i, y = yOf(v);
     grid    += `<line class="grid-line" x1="${xS}" y1="${y.toFixed(1)}" x2="${xE}" y2="${y.toFixed(1)}"/>`;
-    const lbl = v >= 1000000 ? (v / 1000000).toFixed(0) + 'M' : v;
-    yLabels += `<text class="axis-text" x="${xS - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end">${lbl}</text>`;
+    yLabels += `<text class="axis-text" x="${xS-8}" y="${(y+4).toFixed(1)}" text-anchor="end">${v>=1000000?(v/1000000).toFixed(0)+'M':v}</text>`;
   }
-
-  const xLabels = meses.map((m, i) =>
-    `<text class="axis-text" x="${xOf(i).toFixed(1)}" y="230" text-anchor="middle">${m}</text>`
-  ).join('');
-
-  const iPts = ingresos.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
-  const cPts  = costos.map((v, i)  => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
-
-  const iArea = `M${ingresos.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' L')} L${xE},${yS} L${xS},${yS} Z`;
-  const cArea  = `M${costos.map((v, i)  => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' L')} L${xE},${yS} L${xS},${yS} Z`;
-
-  const iMarkers = ingresos.map((v, i) => `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="3.2"/>`).join('');
-  const cMarkers  = costos.map((v, i)  => `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="3.2"/>`).join('');
-
+  const xLabels  = meses.map((m,i) => `<text class="axis-text" x="${xOf(i).toFixed(1)}" y="230" text-anchor="middle">${m}</text>`).join('');
+  const iPts     = ingresos.map((v,i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
+  const cPts     = costos.map((v,i)   => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
+  const iArea    = `M${ingresos.map((v,i)=>`${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' L')} L${xE},${yS} L${xS},${yS} Z`;
+  const cArea    = `M${costos.map((v,i)=>`${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' L')} L${xE},${yS} L${xS},${yS} Z`;
+  const iMarkers = ingresos.map((v,i) => `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="3.2"/>`).join('');
+  const cMarkers = costos.map((v,i)   => `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="3.2"/>`).join('');
   $('grafico-wrap').innerHTML = `
     <svg viewBox="0 0 500 240" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      ${grid}
-      ${yLabels}
-      ${xLabels}
+      ${grid}${yLabels}${xLabels}
       <path d="${iArea}" fill="#8FA876" fill-opacity="0.18" stroke="none"/>
-      <path d="${cArea}"  fill="#C97B5B" fill-opacity="0.10" stroke="none"/>
+      <path d="${cArea}" fill="#C97B5B" fill-opacity="0.10" stroke="none"/>
       <polyline points="${iPts}" fill="none" stroke="#8FA876" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-      <polyline points="${cPts}"  fill="none" stroke="#C97B5B" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+      <polyline points="${cPts}" fill="none" stroke="#C97B5B" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
       <g fill="#8FA876">${iMarkers}</g>
       <g fill="#C97B5B">${cMarkers}</g>
     </svg>`;
 }
 
 // ============================================================
-// RENDER COMPLETO
+// RENDER TODO
 // ============================================================
 function renderAll() {
   renderKpiTop();
@@ -686,14 +793,15 @@ function renderAll() {
 // ============================================================
 // CAMBIO DE PESTAÑAS
 // ============================================================
-document.querySelectorAll('.nav a').forEach(link => {
-  link.addEventListener('click', function(e) {
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', function(e) {
     e.preventDefault();
     const tab = this.dataset.tab;
-    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(a => a.classList.remove('active'));
     this.classList.add('active');
     document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
     $('tab-' + tab).classList.add('active');
+    $('page-title').textContent = TAB_NAMES[tab] || tab;
   });
 });
 
@@ -706,77 +814,46 @@ function handleExcel(file) {
   reader.onload = function(e) {
     try {
       const wb = XLSX.read(e.target.result, { type: 'binary' });
-
-      // Buscar hoja "Obras" (sin importar mayúsculas/minúsculas)
-      const nombreHojaObras = wb.SheetNames.find(n => n.toLowerCase() === 'obras') ?? wb.SheetNames[0];
-      const hojaObras = wb.Sheets[nombreHojaObras];
-      const filas = XLSX.utils.sheet_to_json(hojaObras, { defval: '' });
-
-      const nuevasObras = filas
-        .map(r => ({
-          nombre:      String(r['Obra']        || '').trim(),
-          cliente:     String(r['Cliente']     || '').trim(),
-          presupuesto: Number(r['Presupuesto'] || 0),
-          costoReal:   Number(r['Costo Real']  || 0),
-          ejecucion:   Number(r['% Ejecución'] || r['Ejecucion'] || r['% Ejecucion'] || 0),
-          estado:      mapEstado(String(r['Estado'] || ''))
-        }))
-        .filter(o => o.nombre);
-
-      if (nuevasObras.length === 0) {
-        alert('No se encontraron datos. Verificá que la hoja se llame "Obras" y que los encabezados sean correctos.');
-        return;
+      const nombreHoja = wb.SheetNames.find(n => n.toLowerCase() === 'obras') ?? wb.SheetNames[0];
+      const filas = XLSX.utils.sheet_to_json(wb.Sheets[nombreHoja], { defval: '' });
+      const nuevas = filas.map(r => ({
+        nombre:      String(r['Obra']        || '').trim(),
+        cliente:     String(r['Cliente']     || '').trim(),
+        presupuesto: Number(r['Presupuesto'] || 0),
+        costoReal:   Number(r['Costo Real']  || 0),
+        ejecucion:   Number(r['% Ejecución'] || r['Ejecucion'] || 0),
+        estado:      mapEstado(String(r['Estado'] || ''))
+      })).filter(o => o.nombre);
+      if (!nuevas.length) { alert('No se encontraron datos. Verificá los encabezados.'); return; }
+      DATOS.obras = nuevas;
+      const kpiSheet = wb.SheetNames.find(n => n.toLowerCase() === 'kpis');
+      if (kpiSheet) {
+        const r = XLSX.utils.sheet_to_json(wb.Sheets[kpiSheet], { defval: '' })[0] || {};
+        if (r['Ingresos Totales']) DATOS.kpis.ingresosTotales = Number(r['Ingresos Totales']);
+        if (r['Costos Totales'])   DATOS.kpis.costosTotales   = Number(r['Costos Totales']);
+        if (r['Saldo de Caja'])    DATOS.kpis.saldoCaja        = Number(r['Saldo de Caja']);
       }
-      DATOS.obras = nuevasObras;
-
-      // Hoja "KPIs" (opcional)
-      const nombreHojaKPIs = wb.SheetNames.find(n => n.toLowerCase() === 'kpis');
-      if (nombreHojaKPIs) {
-        const filasKPI = XLSX.utils.sheet_to_json(wb.Sheets[nombreHojaKPIs], { defval: '' });
-        if (filasKPI[0]) {
-          const r = filasKPI[0];
-          if (r['Ingresos Totales']) DATOS.kpis.ingresosTotales = Number(r['Ingresos Totales']);
-          if (r['Costos Totales'])   DATOS.kpis.costosTotales   = Number(r['Costos Totales']);
-          if (r['Saldo de Caja'])    DATOS.kpis.saldoCaja        = Number(r['Saldo de Caja']);
-        }
-      }
-
       renderAll();
-
       const msg = $('config-success');
-      if (msg) {
-        msg.textContent = `✓ ${DATOS.obras.length} obras cargadas correctamente.`;
-        msg.classList.add('visible');
-      }
-
-    } catch (err) {
-      alert('Error al leer el archivo. Verificá que sea un Excel válido (.xlsx o .xls).');
-      console.error(err);
-    }
+      if (msg) { msg.textContent = `✓ ${DATOS.obras.length} obras cargadas.`; msg.classList.add('visible'); }
+    } catch(err) { alert('Error al leer el archivo Excel.'); console.error(err); }
   };
   reader.readAsBinaryString(file);
 }
 
 // ============================================================
-// DESCARGAR PLANTILLA EXCEL
+// DESCARGAR PLANTILLA
 // ============================================================
 function descargarPlantilla() {
   const wb = XLSX.utils.book_new();
-
-  // Hoja Obras con los datos actuales como ejemplo
-  const filasObras = [
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
     ['Obra', 'Cliente', 'Presupuesto', 'Costo Real', '% Ejecución', 'Estado'],
     ...DATOS.obras.map(o => [o.nombre, o.cliente, o.presupuesto, o.costoReal, o.ejecucion, ESTADO_LABEL[o.estado]])
-  ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(filasObras), 'Obras');
-
-  // Hoja KPIs
-  const filasKPI = [
+  ]), 'Obras');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
     ['Ingresos Totales', 'Costos Totales', 'Saldo de Caja'],
     [DATOS.kpis.ingresosTotales, DATOS.kpis.costosTotales, DATOS.kpis.saldoCaja]
-  ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(filasKPI), 'KPIs');
-
+  ]), 'KPIs');
   XLSX.writeFile(wb, 'datos_estudioarq.xlsx');
 }
 
