@@ -821,20 +821,20 @@ function renderPresupuesto() {
   // --- Chart SVG (horizontal bars, nombre vs ejecutado) ---
   const maxPres = Math.max(...rubros.map(r => r.presupuestado));
   const rowH = 26, padTop = 6;
-  const wLabel = 130, xBar = wLabel + 6, wBarMax = 90, xPct = xBar + wBarMax + 5;
-  const svgW = xPct + 26;
+  const wLabel = 130, xBar = wLabel + 6, wBarMax = 110, xPct = xBar + wBarMax + 6;
+  const svgW = xPct + 28;
   const svgH = rubros.length * rowH + padTop * 2;
 
+  // Cada barra = % de ejecución (0–100%), no relativo al max presupuesto
   const chartRows = rubros.map((r, i) => {
     const cy      = padTop + i * rowH + rowH / 2;
     const pct     = r.presupuestado ? Math.round(r.ejecutado / r.presupuestado * 100) : 0;
-    const bwPres  = (r.presupuestado / maxPres * wBarMax).toFixed(1);
-    const bwEjec  = Math.min(r.ejecutado / maxPres * wBarMax, r.presupuestado / maxPres * wBarMax).toFixed(1);
-    const barFill = pct >= 100 ? '#C97B5B' : pct > 0 ? '#8FA876' : '#C8C0B4';
+    const bwEjec  = (Math.min(pct, 100) / 100 * wBarMax).toFixed(1);
+    const barFill = pct >= 100 ? '#C97B5B' : pct >= 50 ? '#8FA876' : pct > 0 ? '#E2B14A' : '#C8C0B4';
     const nombre  = r.desc.length > 20 ? r.desc.substring(0, 19) + '…' : r.desc;
     return `<text x="${wLabel - 2}" y="${cy + 3.5}" text-anchor="end" fill="#3D3935" font-size="8.5" font-family="inherit">${nombre}</text>
-      <rect x="${xBar}" y="${cy - 6}" width="${bwPres}" height="10" rx="5" fill="#EDE5D8"/>
-      <rect x="${xBar}" y="${cy - 6}" width="${bwEjec}" height="10" rx="5" fill="${barFill}" fill-opacity="0.85"/>
+      <rect x="${xBar}" y="${cy - 6}" width="${wBarMax}" height="10" rx="5" fill="#EDE5D8"/>
+      <rect x="${xBar}" y="${cy - 6}" width="${bwEjec}" height="10" rx="5" fill="${barFill}" fill-opacity="0.88"/>
       <text x="${xPct}" y="${cy + 3.5}" fill="#8A847E" font-size="8.5" font-family="inherit">${pct}%</text>`;
   }).join('');
 
