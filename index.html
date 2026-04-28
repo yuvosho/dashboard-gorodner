@@ -112,11 +112,11 @@
   .tab-section.active { display: flex; }
 
   /* KPI ROW */
-  .kpi-row   { display: flex; flex-wrap: nowrap; gap: 12px; }
-  .kpi-row-4 { display: flex; flex-wrap: nowrap; gap: 12px; }
+  .kpi-row   { display: flex; flex-wrap: nowrap; gap: 16px; }
+  .kpi-row-4 { display: flex; flex-wrap: nowrap; gap: 16px; }
   .kpi-row > .kpi   { flex: 1 1 0; min-width: 0; }
   .kpi-row-4 > .kpi { flex: 1 1 0; min-width: 0; }
-  .kpi { background: var(--card-bg); border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 2px rgba(60,50,40,0.04); min-width: 0; }
+  .kpi { background: var(--card-bg); border-radius: 10px; padding: 16px 18px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(60,50,40,0.07); min-width: 0; }
   .kpi-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .kpi-icon svg { width: 18px; height: 18px; color: #fff; }
   .kpi-icon.green { background: var(--green); }
@@ -959,9 +959,11 @@ function renderCashflow() {
 
   // --- Chart SVG (grouped bars) ---
   const maxVal = Math.max(...meses.map(m => Math.max(byMonth[m].ing, byMonth[m].gas)));
-  const cW = 380, cH = 145, padL = 46, padR = 8, padT = 8, padB = 28;
-  const plotW = cW - padL - padR, plotH = cH - padT - padB;
+  const cW = 380, padL = 46, padR = 8, padT = 8, padB = 28, plotH = 109;
+  const cH = padT + plotH + padB + 22; // 22px extra para la leyenda
+  const plotW = cW - padL - padR;
   const colW = plotW / meses.length, barW = colW * 0.34;
+  const legendY = padT + plotH + padB + 13;
 
   const gridLines = [0.25,0.5,0.75,1].map(s => {
     const y = padT + plotH - s * plotH;
@@ -976,15 +978,15 @@ function renderCashflow() {
     const gasH = byMonth[mes].gas / maxVal * plotH;
     return `<rect x="${(cx-barW-1).toFixed(1)}" y="${(padT+plotH-ingH).toFixed(1)}" width="${barW.toFixed(1)}" height="${ingH.toFixed(1)}" rx="3" fill="#8FA876" fill-opacity="0.85"/>
       <rect x="${(cx+1).toFixed(1)}" y="${(padT+plotH-gasH).toFixed(1)}" width="${barW.toFixed(1)}" height="${gasH.toFixed(1)}" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
-      <text x="${cx.toFixed(1)}" y="${(cH-padB+14).toFixed(1)}" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">${mesLabels[mes]||mes}</text>`;
+      <text x="${cx.toFixed(1)}" y="${(padT+plotH+14).toFixed(1)}" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">${mesLabels[mes]||mes}</text>`;
   }).join('');
 
   const chart = `<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">
     ${gridLines}${bars}
-    <circle cx="${padL}" cy="${cH-3}" r="4" fill="#8FA876"/>
-    <text x="${padL+8}" y="${cH+0.5}" fill="#8A847E" font-size="9" font-family="inherit">Ingresos</text>
-    <circle cx="${padL+65}" cy="${cH-3}" r="4" fill="#C97B5B"/>
-    <text x="${padL+73}" y="${cH+0.5}" fill="#8A847E" font-size="9" font-family="inherit">Gastos</text>
+    <circle cx="${padL}" cy="${(legendY-3).toFixed(1)}" r="4" fill="#8FA876"/>
+    <text x="${padL+8}" y="${legendY.toFixed(1)}" fill="#8A847E" font-size="9" font-family="inherit">Ingresos</text>
+    <circle cx="${padL+65}" cy="${(legendY-3).toFixed(1)}" r="4" fill="#C97B5B"/>
+    <text x="${padL+73}" y="${legendY.toFixed(1)}" fill="#8A847E" font-size="9" font-family="inherit">Gastos</text>
   </svg>`;
 
   // --- Stat list ---
