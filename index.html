@@ -123,7 +123,7 @@
   .kpi-icon.mustard { background: var(--mustard); }
   .kpi-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
   .kpi-label { font-size: 9.5px; letter-spacing: 0.8px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-  .kpi-value { font-size: 17px; font-weight: 700; color: var(--text); margin-top: 2px; white-space: nowrap; }
+  .kpi-value { font-size: 16px; font-weight: 700; color: var(--text); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .kpi-sub { font-size: 10.5px; color: var(--text-muted); margin-top: 3px; }
   .kpi-sub.up { color: var(--green-dark); }
   .kpi-sub.down { color: var(--terra); }
@@ -253,10 +253,22 @@
   input[type="file"] { display: none; }
 
   /* RESPONSIVE */
+  @media (max-width: 1400px) {
+    .kpi-row   { grid-template-columns: repeat(3, 1fr); }
+    .kpi-row-4 { grid-template-columns: repeat(4, 1fr); }
+  }
   @media (max-width: 1100px) {
-    .kpi-row  { grid-template-columns: repeat(3, 1fr); }
+    .kpi-row   { grid-template-columns: repeat(3, 1fr); }
     .kpi-row-4 { grid-template-columns: repeat(2, 1fr); }
-    .middle   { grid-template-columns: 1fr; }
+    .middle    { grid-template-columns: 1fr; }
+    .middle-wide { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 780px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .kpi-row   { grid-template-columns: repeat(2, 1fr); }
+    .kpi-row-4 { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 16px; }
   }
 </style>
 </head>
@@ -806,21 +818,23 @@ function renderPresupuesto() {
   const totalRest = totalPres - totalEjec;
   const pctAvance = totalPres ? Math.round(totalEjec / totalPres * 100) : 0;
 
-  // --- Chart SVG (horizontal bars, presupuestado vs ejecutado) ---
+  // --- Chart SVG (horizontal bars, nombre vs ejecutado) ---
   const maxPres = Math.max(...rubros.map(r => r.presupuestado));
-  const rowH = 22, padTop = 4, wCode = 40, xBar = wCode + 4, wBarMax = 150, xPct = xBar + wBarMax + 4;
-  const svgW = xPct + 30;
+  const rowH = 26, padTop = 6;
+  const wLabel = 130, xBar = wLabel + 6, wBarMax = 90, xPct = xBar + wBarMax + 5;
+  const svgW = xPct + 26;
   const svgH = rubros.length * rowH + padTop * 2;
 
   const chartRows = rubros.map((r, i) => {
-    const cy        = padTop + i * rowH + rowH / 2;
-    const pct       = r.presupuestado ? Math.round(r.ejecutado / r.presupuestado * 100) : 0;
-    const bwPres    = (r.presupuestado / maxPres * wBarMax).toFixed(1);
-    const bwEjec    = Math.min(r.ejecutado / maxPres * wBarMax, r.presupuestado / maxPres * wBarMax).toFixed(1);
-    const barFill   = pct >= 100 ? '#C97B5B' : pct > 0 ? '#8FA876' : '#C8C0B4';
-    return `<text x="${wCode - 2}" y="${cy + 3.5}" text-anchor="end" fill="#C97B5B" font-size="8.5" font-family="inherit" font-weight="700">${r.cod}</text>
-      <rect x="${xBar}" y="${cy - 7}" width="${bwPres}" height="11" rx="5.5" fill="#EDE5D8"/>
-      <rect x="${xBar}" y="${cy - 7}" width="${bwEjec}" height="11" rx="5.5" fill="${barFill}" fill-opacity="0.85"/>
+    const cy      = padTop + i * rowH + rowH / 2;
+    const pct     = r.presupuestado ? Math.round(r.ejecutado / r.presupuestado * 100) : 0;
+    const bwPres  = (r.presupuestado / maxPres * wBarMax).toFixed(1);
+    const bwEjec  = Math.min(r.ejecutado / maxPres * wBarMax, r.presupuestado / maxPres * wBarMax).toFixed(1);
+    const barFill = pct >= 100 ? '#C97B5B' : pct > 0 ? '#8FA876' : '#C8C0B4';
+    const nombre  = r.desc.length > 20 ? r.desc.substring(0, 19) + '…' : r.desc;
+    return `<text x="${wLabel - 2}" y="${cy + 3.5}" text-anchor="end" fill="#3D3935" font-size="8.5" font-family="inherit">${nombre}</text>
+      <rect x="${xBar}" y="${cy - 6}" width="${bwPres}" height="10" rx="5" fill="#EDE5D8"/>
+      <rect x="${xBar}" y="${cy - 6}" width="${bwEjec}" height="10" rx="5" fill="${barFill}" fill-opacity="0.85"/>
       <text x="${xPct}" y="${cy + 3.5}" fill="#8A847E" font-size="8.5" font-family="inherit">${pct}%</text>`;
   }).join('');
 
