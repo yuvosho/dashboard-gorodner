@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>brzn arquitectura — Control de Obras</title>
+<style>
+  :root {
+    --bg: #FAF6F0;
+    --sidebar-bg: #F2EBE0;
+    --card-bg: #FFFFFF;
+    --green: #8FA876;
+    --green-dark: #5C6E48;
+    --green-soft: #E4ECD9;
+    --terra: #C97B5B;
+    --terra-soft: #F5DDD2;
+    --taupe: #A8927A;
+    --taupe-soft: #EADFD0;
+    --mustard: #E2B14A;
+    --mustard-soft: #F8E9C2;
+    --text: #3D3935;
+    --text-muted: #8A847E;
+    --border: #EDE5D8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ======= LOGIN SCREEN ======= */
+  .login-overlay {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 9999; display: flex; align-items: center; justify-content: center;
+  }
+  .login-overlay.hidden { display: none; }
+  .login-box {
+    background: var(--card-bg); border-radius: 14px; padding: 44px 40px 36px;
+    width: 340px; box-shadow: 0 4px 32px rgba(60,50,40,0.13);
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+  .login-logo { width: 140px; margin-bottom: 28px; }
+  .login-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    margin-bottom: 6px; text-align: center;
+  }
+  .login-sub { font-size: 11.5px; color: var(--text-muted); margin-bottom: 24px; text-align: center; }
+  .login-field { width: 100%; margin-bottom: 12px; }
+  .login-field label { display: block; font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 5px; }
+  .login-field input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 7px; font-size: 13px; font-family: inherit;
+    background: var(--bg); color: var(--text); outline: none;
+    transition: border-color 0.15s;
+  }
+  .login-field input:focus { border-color: var(--terra); }
+  .login-btn {
+    width: 100%; padding: 11px; background: var(--terra); color: #fff;
+    border: none; border-radius: 7px; font-size: 13.5px; font-weight: 700;
+    font-family: inherit; cursor: pointer; margin-top: 8px;
+    transition: background 0.15s;
+  }
+  .login-btn:hover { background: #b5674a; }
+  .login-btn:disabled { background: var(--taupe); cursor: default; }
+  .login-error {
+    margin-top: 12px; font-size: 12px; color: var(--terra);
+    text-align: center; min-height: 18px;
+  }
+
+  /* ======= LAYOUT ======= */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ======= SIDEBAR ======= */
+  .sidebar {
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+  }
+  .sidebar-logo {
+    padding: 8px 8px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .nav-group-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 14px 10px 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 7px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; stroke: currentColor; }
+  .nav-item:hover { background: var(--taupe-soft); color: var(--text); }
+  .nav-item.active { background: var(--terra-soft); color: var(--terra); font-weight: 600; }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 10px 4px;
+    border-top: 1px solid var(--border);
+    font-size: 10.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* ======= MAIN ======= */
+  .main {
+    padding: 22px 32px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-title { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .topbar-user { font-size: 11.5px; color: var(--text-muted); }
+  .upload-label {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 14px; background: var(--green); color: #fff;
+    border-radius: 7px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s; white-space: nowrap;
+  }
+  .upload-label:hover { background: var(--green-dark); }
+  .upload-label svg { width: 13px; height: 13px; }
+  #excel-upload { display: none; }
+  .logout-btn {
+    padding: 7px 14px; background: var(--border); color: var(--text-muted);
+    border: none; border-radius: 7px; font-size: 12px; font-family: inherit;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .logout-btn:hover { background: var(--taupe-soft); color: var(--text); }
+
+  /* Upload toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9000;
+    background: var(--text); color: #fff; padding: 12px 20px;
+    border-radius: 8px; font-size: 13px; opacity: 0;
+    transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .toast.success { background: var(--green-dark); }
+  .toast.error   { background: var(--terra); }
+
+  /* ======= TAB SECTIONS ======= */
+  .tab-section { display: none; flex-direction: column; gap: 18px; }
+  .tab-section.active { display: flex; }
+
+  /* KPI ROW */
+  .kpi-row   { display: flex; flex-wrap: wrap; gap: 20px; }
+  .kpi-row-4 { display: flex; flex-wrap: wrap; gap: 20px; }
+  .kpi-row > .kpi   { flex: 1 1 170px; min-width: 170px; }
+  .kpi-row-4 > .kpi { flex: 1 1 200px; min-width: 200px; }
+  .kpi { background: var(--card-bg); border-radius: 10px; padding: 16px 18px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(60,50,40,0.09); min-width: 0; }
+  .kpi-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .kpi-icon svg { width: 18px; height: 18px; color: #fff; }
+  .kpi-icon.green { background: var(--green); }
+  .kpi-icon.taupe { background: var(--taupe); }
+  .kpi-icon.terra { background: var(--terra); }
+  .kpi-icon.mustard { background: var(--mustard); }
+  .kpi-body { display: flex; flex-direction: column; min-width: 0; flex: 1; overflow: hidden; }
+  .kpi-label { font-size: 9px; letter-spacing: 0.7px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi-value { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi-sub { font-size: 10.5px; color: var(--text-muted); margin-top: 3px; }
+  .kpi-sub.up { color: var(--green-dark); }
+  .kpi-sub.down { color: var(--terra); }
+  .progress { height: 5px; border-radius: 4px; background: var(--border); overflow: hidden; margin-top: 6px; }
+  .progress > span { display: block; height: 100%; background: var(--green); border-radius: 4px; }
+
+  /* MIDDLE */
+  .middle { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+  .panel { background: var(--card-bg); border-radius: 8px; padding: 16px 18px; box-shadow: 0 1px 2px rgba(60,50,40,0.04); }
+  .panel-title { color: var(--terra); font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th { text-align: left; color: var(--text-muted); font-weight: 600; font-size: 10px; letter-spacing: 0.6px; padding: 8px 6px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  tbody td { padding: 11px 6px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.amount { white-space: nowrap; }
+  td.muted { color: var(--text-muted); font-style: italic; }
+  .pct-cell { display: flex; align-items: center; gap: 8px; min-width: 110px; }
+  .pct-bar { flex: 1; height: 5px; background: var(--border); border-radius: 4px; overflow: hidden; max-width: 70px; }
+  .pct-bar > span { display: block; height: 100%; background: var(--green); border-radius: 4px; }
+  .pct-bar > span.terra { background: var(--terra); }
+  .pct-bar > span.mustard { background: var(--mustard); }
+  .pct-text { font-size: 11.5px; color: var(--text); min-width: 28px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .badge.curso    { background: var(--green-soft);   color: var(--green-dark); }
+  .badge.curso::before    { background: var(--green); }
+  .badge.exceso   { background: var(--terra-soft);   color: var(--terra); }
+  .badge.exceso::before   { background: var(--terra); }
+  .badge.atencion { background: var(--mustard-soft); color: #997416; }
+  .badge.atencion::before { background: var(--mustard); }
+  .badge.aldia    { background: var(--green-soft);   color: var(--green-dark); }
+  .badge.aldia::before    { background: var(--green); }
+  .badge.pendiente { background: var(--taupe-soft);  color: var(--taupe); }
+  .badge.pendiente::before { background: var(--taupe); }
+
+  /* CHART */
+  .chart-wrap { width: 100%; }
+  .chart-wrap svg { width: 100%; display: block; }
+
+  /* TAB HEADER */
+  .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .tab-header .panel-title { margin-bottom: 0; }
+
+  /* SELECTOR DE OBRA */
+  .obra-selector { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .obra-selector select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 28px 6px 10px;
+    font-size: 12.5px;
+    color: var(--text);
+    background: var(--bg);
+    cursor: pointer;
+    font-family: inherit;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A847E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 0.15s;
+    min-width: 200px;
+  }
+  .obra-selector select:focus { border-color: var(--terra); }
+
+  /* DEMO BANNER */
+  .demo-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--mustard-soft);
+    border: 1px solid var(--mustard);
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: #7a5c10;
+  }
+
+  /* DATA BANNER (cuando hay datos reales) */
+  .data-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--green-soft);
+    border: 1px solid var(--green);
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: var(--green-dark);
+  }
+
+  /* PLACEHOLDER INSIDE PANEL */
+  .placeholder-panel {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 12px; padding: 50px 20px;
+    text-align: center; color: var(--text-muted);
+    border-top: 1px solid var(--border); margin-top: 4px;
+  }
+  .placeholder-panel .ph-icon { font-size: 34px; opacity: 0.45; }
+  .placeholder-panel .ph-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .placeholder-panel .ph-sub { font-size: 12px; max-width: 320px; line-height: 1.7; }
+
+  /* GRIDS ESPECIALES */
+  .middle-wide { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; }
+  .middle-full { display: flex; flex-direction: column; gap: 16px; }
+
+  /* RAÍCES DE TABS DINÁMICAS */
+  #pres-root, #cf-root { display: flex; flex-direction: column; gap: 20px; }
+
+  /* TABLA RUBROS */
+  .rubro-header-row td { background: var(--sidebar-bg); font-weight: 700; font-size: 11.5px; color: var(--text); letter-spacing: 0.3px; }
+  .rubro-header-row td:first-child { color: var(--terra); font-size: 10.5px; }
+  tbody tr.rubro-header-row:last-child td { border-bottom: 1px solid var(--border); }
+
+  /* BADGES CASHFLOW */
+  .badge.cobrado  { background: var(--green-soft);   color: var(--green-dark); }
+  .badge.cobrado::before  { background: var(--green); }
+  .badge.pagado   { background: var(--taupe-soft);   color: var(--taupe); }
+  .badge.pagado::before   { background: var(--taupe); }
+  .badge.pendiente-cf { background: var(--mustard-soft); color: #997416; }
+  .badge.pendiente-cf::before { background: var(--mustard); }
+  .tipo-ingreso { color: var(--green-dark); font-weight: 600; }
+  .tipo-gasto   { color: var(--terra);      font-weight: 600; }
+
+  /* STAT CARDS (cashflow resumen lateral) */
+  .stat-list { display: flex; flex-direction: column; gap: 0; }
+  .stat-item { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  .stat-item:last-child { border-bottom: none; }
+  .stat-label { color: var(--text-muted); }
+  .stat-value { font-weight: 700; color: var(--text); }
+  .stat-value.pos { color: var(--green-dark); }
+  .stat-value.neg { color: var(--terra); }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .btn svg { width: 14px; height: 14px; }
+  .btn-green  { background: var(--green);  color: #fff; }
+  .btn-green:hover  { background: var(--green-dark); }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) {
+    .kpi-row   { flex-wrap: wrap; }
+    .kpi-row-4 { flex-wrap: wrap; }
+    .middle      { grid-template-columns: 1fr; }
+    .middle-wide { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 780px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ======= LOGIN SCREEN ======= -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <img src="/logo.png" alt="brzn arquitectura" class="login-logo">
+    <div class="login-title">Control de Obras</div>
+    <div class="login-sub">Ingresá con tu cuenta para continuar</div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="tu usuario" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ======= TOAST ======= -->
+<div class="toast" id="toast"></div>
+
+<div class="layout">
+
+  <!-- ======= SIDEBAR ======= -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/logo.png" alt="brzn arquitectura" style="width:100%; max-width:160px; object-fit:contain;">
+    </div>
+
+    <div class="nav-group-label">Principal</div>
+
+    <a class="nav-item active" data-tab="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </a>
+
+    <a class="nav-item" data-tab="obras">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+      </svg>
+      Obras
+    </a>
+
+    <div class="nav-group-label">Finanzas</div>
+
+    <a class="nav-item" data-tab="presupuesto">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="12" y1="17" x2="8" y2="17"/>
+      </svg>
+      Presupuesto
+    </a>
+
+    <a class="nav-item" data-tab="cashflow">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 3l4 4-4 4"/><path d="M3 7h18"/>
+        <path d="M7 21l-4-4 4-4"/><path d="M21 17H3"/>
+      </svg>
+      Cashflow
+    </a>
+
+    <div class="nav-group-label">Administración</div>
+
+    <a class="nav-item" data-tab="proveedores">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Proveedores
+    </a>
+
+    <a class="nav-item" data-tab="reportes">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      Reportes
+    </a>
+
+    <div class="sidebar-footer">brzn arquitectura © 2026</div>
+  </aside>
+
+  <!-- ======= MAIN ======= -->
+  <main class="main">
+
+    <div class="topbar">
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="topbar-right">
+        <span class="topbar-user" id="topbar-user"></span>
+        <label class="upload-label" for="excel-upload">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Subir Excel
+        </label>
+        <input type="file" id="excel-upload" accept=".xlsx,.xls">
+        <button class="logout-btn" onclick="doLogout()">Salir</button>
+      </div>
+    </div>
+
+    <!-- ======= TAB: DASHBOARD ======= -->
+    <div id="tab-dashboard" class="tab-section active">
+      <div id="kpi-top" class="kpi-row"></div>
+      <div class="middle">
+        <div class="panel">
+          <div class="panel-title">Resumen de Obras</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Obra</th><th>Cliente</th><th>Presupuesto</th>
+                <th>Costo Real</th><th>% Ejecución</th><th>Resultado</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-dashboard"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-title">% Ejecución por Obra</div>
+          <div class="chart-wrap" id="grafico-wrap"></div>
+        </div>
+      </div>
+      <div id="kpi-bottom" class="kpi-row"></div>
+    </div>
+
+    <!-- ======= TAB: OBRAS ======= -->
+    <div id="tab-obras" class="tab-section">
+      <div class="panel">
+        <div class="panel-title">Todas las Obras</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Obra</th><th>Cliente</th><th>Presupuesto</th>
+              <th>Costo Real</th><th>% Ejecución</th><th>Resultado</th><th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-obras"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======= TAB: PRESUPUESTO ======= -->
+    <div id="tab-presupuesto" class="tab-section">
+      <div id="pres-root"></div>
+    </div>
+
+    <!-- ======= TAB: CASHFLOW ======= -->
+    <div id="tab-cashflow" class="tab-section">
+      <div id="cf-root"></div>
+    </div>
+
+    <!-- ======= TAB: PROVEEDORES ======= -->
+    <div id="tab-proveedores" class="tab-section">
+      <div class="demo-banner">
+        ⚠️ Vista previa del diseño — los datos reales se cargarán desde Excel
+      </div>
+      <div class="panel">
+        <div class="tab-header">
+          <div class="panel-title">Proveedores</div>
+          <div class="obra-selector">
+            <span>Obra:</span>
+            <select id="sel-proveedores"><option value="">— Seleccionar obra —</option></select>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Proveedor</th><th>Rubro</th><th>Contacto</th><th>Contratado</th><th>Pagado</th><th>Pendiente</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Constructora Gómez</strong></td><td>Estructura</td><td style="color:var(--text-muted)">11-4567-8901</td><td class="amount">$ 4.200.000</td><td class="amount">$ 2.800.000</td><td class="amount">$ 1.400.000</td><td><span class="badge aldia">Al día</span></td></tr>
+            <tr><td><strong>ElectroPro S.A.</strong></td><td>Instalaciones eléctricas</td><td style="color:var(--text-muted)">11-2345-6789</td><td class="amount">$ 1.800.000</td><td class="amount">$ 980.000</td><td class="amount">$ 820.000</td><td><span class="badge aldia">Al día</span></td></tr>
+            <tr><td><strong>Maderas del Sur</strong></td><td>Carpintería</td><td style="color:var(--text-muted)">11-5678-9012</td><td class="amount">$ 2.800.000</td><td class="amount muted">$ 0</td><td class="amount">$ 2.800.000</td><td><span class="badge pendiente">Pendiente</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======= TAB: REPORTES ======= -->
+    <div id="tab-reportes" class="tab-section">
+      <div class="panel" style="text-align:center; padding: 80px 20px;">
+        <div style="font-size:38px; opacity:0.4; margin-bottom:14px;">📋</div>
+        <div style="font-size:15px; font-weight:600; margin-bottom:8px;">Reportes</div>
+        <div style="font-size:12.5px; color:var(--text-muted); max-width:320px; margin:0 auto; line-height:1.7;">
+          Informes ejecutivos exportables. Próximamente.
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+
+// ============================================================
+// AUTH
+// ============================================================
+const TOKEN_KEY = 'brzn_token';
+const USER_KEY  = 'brzn_user';
+
+function getToken()    { return localStorage.getItem(TOKEN_KEY); }
+function getUsername() { return localStorage.getItem(USER_KEY) || ''; }
+
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+
+  if (!username || !password) { errEl.textContent = 'Completá todos los campos'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Ingresando...';
+  errEl.textContent = '';
+
+  try {
+    const res  = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al ingresar');
+
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(USER_KEY, data.username);
+    document.getElementById('login-overlay').classList.add('hidden');
+    document.getElementById('topbar-user').textContent = data.username;
+    loadData();
+  } catch (err) {
+    errEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Ingresar';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  document.getElementById('login-overlay').classList.remove('hidden');
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').textContent = '';
+}
+
+// Enter key en login
+document.addEventListener('DOMContentLoaded', () => {
+  ['login-user','login-pass'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+});
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show ' + type;
+  setTimeout(() => { t.className = 'toast'; }, 3500);
+}
+
+// ============================================================
+// UPLOAD EXCEL
+// ============================================================
+document.getElementById('excel-upload').addEventListener('change', async function () {
+  const file = this.files[0];
+  if (!file) return;
+  this.value = '';
+
+  showToast('Subiendo Excel…');
+  const fd = new FormData();
+  fd.append('excel', file);
+
+  try {
+    const res  = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken() },
+      body: fd
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al subir');
+
+    showToast('✅ Excel cargado — ' + (data.data.rubros?.length || 0) + ' rubros encontrados', 'success');
+    applyData(data.data);
+    renderAll();
+  } catch (err) {
+    if (err.message.includes('expirada')) { doLogout(); return; }
+    showToast('❌ ' + err.message, 'error');
+  }
+});
+
+// ============================================================
+// CARGAR DATOS DESDE API
+// ============================================================
+async function loadData() {
+  const token = getToken();
+  if (!token) { doLogout(); return; }
+
+  document.getElementById('topbar-user').textContent = getUsername();
+
+  try {
+    const res  = await fetch('/api/data', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+
+    if (data && data.rubros && data.rubros.length > 0) {
+      applyData(data);
+    }
+    // Si data es null → usa los datos demo que ya están en DATOS/PRES/CF
+    renderAll();
+  } catch (err) {
+    console.error('Error cargando datos:', err);
+    renderAll(); // fallback a demo data
+  }
+}
+
+// ============================================================
+// APLICAR DATOS DEL EXCEL A LAS VARIABLES
+// ============================================================
+function applyData(data) {
+  if (!data) return;
+
+  // Actualizar PRES con datos reales del Excel
+  if (data.rubros && data.rubros.length > 0) {
+    PRES.obra    = data.obra    || PRES.obra;
+    PRES.cliente = data.cliente || PRES.cliente;
+    PRES.rubros  = data.rubros;
+  }
+
+  // Mostrar info de la última actualización
+  if (data.updatedAt) {
+    const d = new Date(data.updatedAt);
+    const fmt = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+    window._lastUpdate = fmt;
+    window._lastUser   = data.updatedBy || '';
+  }
+}
+
+// ============================================================
+// DATOS DEMO (fallback cuando no hay Excel subido)
+// ============================================================
+const DATOS = {
+  kpis: {
+    ingresosTotales: 38760000,
+    costosTotales:   27450000,
+    saldoCaja:        8250000,
+    varIngresos:   "+12%",
+    varCostos:      "+8%",
+    varResultado:  "+20%"
+  },
+  obras: [
+    { nombre: "Casa Olivos",             cliente: "Fam. Gómez",                presupuesto: 18500000, costoReal: 12850000, ejecucion: 69, estado: "curso"    },
+    { nombre: "Oficinas Belgrano",        cliente: "Belgrano Corp.",            presupuesto: 26000000, costoReal: 17600000, ejecucion: 68, estado: "curso"    },
+    { nombre: "Local Nordelta",           cliente: "Emprendimientos del Norte", presupuesto:  9800000, costoReal:  6500000, ejecucion: 66, estado: "exceso"   },
+    { nombre: "Vivienda Los Alisos",      cliente: "Fam. Rodríguez",            presupuesto: 15200000, costoReal:  9900000, ejecucion: 70, estado: "curso"    },
+    { nombre: "Remodelación Palermo",     cliente: "Estudio Jurídico Lex",      presupuesto:  6400000, costoReal:  4100000, ejecucion: 64, estado: "atencion" },
+    { nombre: "Casa Pilar",              cliente: "Fam. Santoro",              presupuesto: 22000000, costoReal: 13800000, ejecucion: 63, estado: "curso"    }
+  ]
+};
+
+const PRES = {
+  obra:    'Av. Santa Fe 1970 Piso 4to A',
+  cliente: 'Analia Demonte',
+  rubros: [
+    { cod:'1-00',  desc:'TRABAJOS PRELIMINARES',            presupuestado:687750,   ejecutado:687750   },
+    { cod:'2-00',  desc:'DEMOLICIÓN Y ALBAÑILERÍA',         presupuestado:14192325, ejecutado:11211937 },
+    { cod:'3-00',  desc:'TABIQUERÍA DE DURLOCK',            presupuestado:2559375,  ejecutado:2098688  },
+    { cod:'4-00',  desc:'CIELORRASO DE DURLOCK',            presupuestado:2386125,  ejecutado:1789594  },
+    { cod:'5-00',  desc:'SOLADOS + REVESTIMIENTOS',         presupuestado:7412492,  ejecutado:4225120  },
+    { cod:'6-00',  desc:'PINTURA',                          presupuestado:7581000,  ejecutado:0        },
+    { cod:'7-00',  desc:'SANITARIAS',                       presupuestado:4114900,  ejecutado:3209622  },
+    { cod:'8-00',  desc:'INSTALACIÓN ELÉCTRICA',            presupuestado:5045250,  ejecutado:3783938  },
+    { cod:'9-00',  desc:'ARTEFACTOS ELÉCT. / ILUMINACIÓN', presupuestado:6667000,  ejecutado:0        },
+    { cod:'10-00', desc:'AIRE ACONDICIONADO',               presupuestado:1302000,  ejecutado:0        },
+    { cod:'11-00', desc:'CARPINTERÍA',                      presupuestado:10181750, ejecutado:0        },
+    { cod:'12-00', desc:'JOHNSON - COCINA',                 presupuestado:28391957, ejecutado:28391957 },
+    { cod:'13-00', desc:'ACCESORIOS',                       presupuestado:979700,   ejecutado:0        },
+    { cod:'14-00', desc:'VARIOS',                           presupuestado:787500,   ejecutado:346500   },
+    { cod:'15-00', desc:'GASTOS GENERALES (15%)',           presupuestado:14301112, ejecutado:0        },
+  ]
+};
+
+const CF = {
+  saldoInicial: 0,
+  movimientos: [
+    { fecha:'2026-01-15', tipo:'Ingreso', rubro:'12-00', desc:'JOHNSON - COCINA',      proveedor:'Cliente',        monto:28391957, estado:'Cobrado'   },
+    { fecha:'2026-01-20', tipo:'Gasto',   rubro:'12-00', desc:'JOHNSON - COCINA',      proveedor:'Johnson S.A.',   monto:28391957, estado:'Pagado'    },
+    { fecha:'2026-02-05', tipo:'Ingreso', rubro:'2-00',  desc:'DEMOLICIÓN Y ALBAÑ.',   proveedor:'Cliente',        monto:7096162,  estado:'Cobrado'   },
+    { fecha:'2026-02-10', tipo:'Gasto',   rubro:'2-00',  desc:'DEMOLICIÓN Y ALBAÑ.',   proveedor:'Const. Morales', monto:5600000,  estado:'Pagado'    },
+    { fecha:'2026-02-15', tipo:'Gasto',   rubro:'1-00',  desc:'TRABAJOS PRELIMINARES', proveedor:'Const. Morales', monto:687750,   estado:'Pagado'    },
+    { fecha:'2026-03-01', tipo:'Ingreso', rubro:'7-00',  desc:'SANITARIAS',            proveedor:'Cliente',        monto:2057450,  estado:'Cobrado'   },
+    { fecha:'2026-03-05', tipo:'Gasto',   rubro:'7-00',  desc:'SANITARIAS',            proveedor:'HidroSur',       monto:3209622,  estado:'Pagado'    },
+    { fecha:'2026-03-10', tipo:'Gasto',   rubro:'8-00',  desc:'INSTALACIÓN ELÉCTRICA', proveedor:'ElectroPro',     monto:3783938,  estado:'Pagado'    },
+    { fecha:'2026-04-01', tipo:'Ingreso', rubro:'3-00',  desc:'TABIQUERÍA DURLOCK',    proveedor:'Cliente',        monto:2559375,  estado:'Cobrado'   },
+    { fecha:'2026-04-05', tipo:'Gasto',   rubro:'3-00',  desc:'TABIQUERÍA DURLOCK',    proveedor:'DryWall S.A.',   monto:2098688,  estado:'Pagado'    },
+    { fecha:'2026-04-10', tipo:'Gasto',   rubro:'4-00',  desc:'CIELORRASO DURLOCK',    proveedor:'DryWall S.A.',   monto:1789594,  estado:'Pagado'    },
+    { fecha:'2026-04-15', tipo:'Ingreso', rubro:'5-00',  desc:'SOLADOS Y REVESTIM.',   proveedor:'Cliente',        monto:3706246,  estado:'Cobrado'   },
+    { fecha:'2026-04-20', tipo:'Gasto',   rubro:'5-00',  desc:'SOLADOS Y REVESTIM.',   proveedor:'Pisos & Más',    monto:4225120,  estado:'Pagado'    },
+    { fecha:'2026-04-25', tipo:'Ingreso', rubro:'8-00',  desc:'INSTALACIÓN ELÉCTRICA', proveedor:'Cliente',        monto:2522625,  estado:'Pendiente' },
+    { fecha:'2026-04-27', tipo:'Gasto',   rubro:'14-00', desc:'VARIOS',                proveedor:'Varios',         monto:346500,   estado:'Pendiente' },
+  ]
+};
+
+// ============================================================
+// UTILIDADES
+// ============================================================
+const $ = id => document.getElementById(id);
+
+function formatPeso(n) {
+  return '$ ' + Math.round(n).toLocaleString('es-AR');
+}
+
+const ESTADO_LABEL = { curso: 'En curso', exceso: 'En exceso', atencion: 'Atención' };
+const ESTADO_COLOR = { curso: '#8FA876', exceso: '#C97B5B', atencion: '#E2B14A' };
+
+const TAB_NAMES = {
+  dashboard:   'Dashboard',
+  obras:       'Obras',
+  presupuesto: 'Presupuesto',
+  cashflow:    'Cashflow',
+  proveedores: 'Proveedores',
+  reportes:    'Reportes'
+};
+
+// ============================================================
+// CALCULAR TOTALES
+// ============================================================
+function calcularTotales() {
+  const obras = DATOS.obras;
+  const n = obras.length;
+  return {
+    totalPresupuestado: obras.reduce((s, o) => s + o.presupuesto, 0),
+    totalCostoReal:     obras.reduce((s, o) => s + o.costoReal,   0),
+    ejecucionPromedio:  n ? Math.round(obras.reduce((s, o) => s + o.ejecucion, 0) / n) : 0,
+    cantObras: n
+  };
+}
+
+// ============================================================
+// RENDER KPIs TOP
+// ============================================================
+function renderKpiTop() {
+  const k = DATOS.kpis;
+  const c = calcularTotales();
+  const resultado = k.ingresosTotales - k.costosTotales;
+  $('kpi-top').innerHTML = `
+    <div class="kpi">
+      <div class="kpi-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H6"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Ingresos Totales</span>
+        <span class="kpi-value">${formatPeso(k.ingresosTotales)}</span>
+        <span class="kpi-sub up">${k.varIngresos} vs período anterior</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon taupe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Costos Totales</span>
+        <span class="kpi-value">${formatPeso(k.costosTotales)}</span>
+        <span class="kpi-sub up">${k.varCostos} vs período anterior</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon terra">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M21 12A9 9 0 0 0 12 3v9z" fill="currentColor" opacity="0.4"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Resultado</span>
+        <span class="kpi-value">${formatPeso(resultado)}</span>
+        <span class="kpi-sub up">${k.varResultado} vs período anterior</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">% Ejecución Promedio</span>
+        <span class="kpi-value">${c.ejecucionPromedio}%</span>
+        <div class="progress"><span style="width:${c.ejecucionPromedio}%"></span></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon taupe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12l4 4v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="17" cy="13" r="1.4" fill="currentColor"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Saldo de Caja</span>
+        <span class="kpi-value">${formatPeso(k.saldoCaja)}</span>
+        <span class="kpi-sub">Disponible</span>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// RENDER KPIs BOTTOM
+// ============================================================
+function renderKpiBottom() {
+  const c = calcularTotales();
+  const resultado = c.totalPresupuestado - c.totalCostoReal;
+  const pctCosto  = c.totalPresupuestado ? Math.round((c.totalCostoReal / c.totalPresupuestado) * 100) : 0;
+  const pctResult = c.totalPresupuestado ? Math.round((resultado        / c.totalPresupuestado) * 100) : 0;
+  $('kpi-bottom').innerHTML = `
+    <div class="kpi">
+      <div class="kpi-icon taupe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Total Presupuestado</span>
+        <span class="kpi-value">${formatPeso(c.totalPresupuestado)}</span>
+        <span class="kpi-sub">${c.cantObras} obras</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon taupe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 11h20M6 16h4"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Total Costo Real</span>
+        <span class="kpi-value">${formatPeso(c.totalCostoReal)}</span>
+        <span class="kpi-sub">${pctCosto}% del presupuesto</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon terra">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M21 12A9 9 0 0 0 12 3v9z" fill="currentColor" opacity="0.4"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Resultado Total</span>
+        <span class="kpi-value">${formatPeso(resultado)}</span>
+        <span class="kpi-sub">${pctResult}% del presupuesto</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">% Ejecución Promedio</span>
+        <span class="kpi-value">${c.ejecucionPromedio}%</span>
+        <span class="kpi-sub">Avance general</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon taupe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12l4 4v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="17" cy="13" r="1.4" fill="currentColor"/></svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Saldo de Caja</span>
+        <span class="kpi-value">${formatPeso(DATOS.kpis.saldoCaja)}</span>
+        <span class="kpi-sub">Disponible</span>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// RENDER TABLA
+// ============================================================
+function renderTabla(tbodyId) {
+  $(tbodyId).innerHTML = DATOS.obras.map(o => {
+    const resultado = o.presupuesto - o.costoReal;
+    return `<tr>
+      <td>${o.nombre}</td>
+      <td>${o.cliente}</td>
+      <td class="amount">${formatPeso(o.presupuesto)}</td>
+      <td class="amount">${formatPeso(o.costoReal)}</td>
+      <td>
+        <div class="pct-cell">
+          <div class="pct-bar"><span style="width:${o.ejecucion}%"></span></div>
+          <span class="pct-text">${o.ejecucion}%</span>
+        </div>
+      </td>
+      <td class="amount">${formatPeso(resultado)}</td>
+      <td><span class="badge ${o.estado}">${ESTADO_LABEL[o.estado] || o.estado}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// RENDER GRÁFICO
+// ============================================================
+function renderGrafico() {
+  const obras = DATOS.obras;
+  if (!obras.length) { $('grafico-wrap').innerHTML = ''; return; }
+
+  const rowH = 40, padTop = 6, padBot = 6;
+  const xLabel = 0, wLabel = 148;
+  const xBar = 156, wBar = 240;
+  const xPct = xBar + wBar + 10;
+  const totalH = obras.length * rowH + padTop + padBot;
+
+  const rows = obras.map((o, i) => {
+    const cy   = padTop + i * rowH + rowH / 2;
+    const barW = Math.min(o.ejecucion, 100) / 100 * wBar;
+    const color = ESTADO_COLOR[o.estado] || '#8FA876';
+    const nombre = o.nombre.length > 22 ? o.nombre.substring(0, 20) + '…' : o.nombre;
+    return `
+      <text x="${wLabel}" y="${cy + 4}" text-anchor="end" fill="#3D3935" font-size="11.5" font-family="inherit">${nombre}</text>
+      <rect x="${xBar}" y="${cy - 7}" width="${wBar}" height="14" rx="7" fill="#EDE5D8"/>
+      <rect x="${xBar}" y="${cy - 7}" width="${barW.toFixed(1)}" height="14" rx="7" fill="${color}" fill-opacity="0.82"/>
+      <text x="${xPct}" y="${cy + 4}" fill="${color}" font-size="11.5" font-family="inherit" font-weight="700">${o.ejecucion}%</text>`;
+  }).join('');
+
+  $('grafico-wrap').innerHTML = `<svg viewBox="0 0 430 ${totalH}" xmlns="http://www.w3.org/2000/svg">${rows}</svg>`;
+}
+
+// ============================================================
+// POBLAR SELECTORES
+// ============================================================
+function poblarSelectores() {
+  const opciones = DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+  const base = '<option value="">— Seleccionar obra —</option>' + opciones;
+  ['sel-presupuesto', 'sel-cashflow', 'sel-proveedores'].forEach(id => {
+    const el = $(id);
+    if (el) el.innerHTML = base;
+  });
+}
+
+// ============================================================
+// RENDER PRESUPUESTO
+// ============================================================
+function renderPresupuesto() {
+  const rubros    = PRES.rubros;
+  const totalPres = rubros.reduce((s, r) => s + r.presupuestado, 0);
+  const totalEjec = rubros.reduce((s, r) => s + r.ejecutado,     0);
+  const totalRest = totalPres - totalEjec;
+  const pctAvance = totalPres ? Math.round(totalEjec / totalPres * 100) : 0;
+
+  const maxPres = Math.max(...rubros.map(r => r.presupuestado));
+  const rowH = 26, padTop = 6;
+  const wLabel = 130, xBar = wLabel + 6, wBarMax = 110, xPct = xBar + wBarMax + 6;
+  const svgW = xPct + 28;
+  const svgH = rubros.length * rowH + padTop * 2;
+
+  const chartRows = rubros.map((r, i) => {
+    const cy      = padTop + i * rowH + rowH / 2;
+    const pct     = r.presupuestado ? Math.round(r.ejecutado / r.presupuestado * 100) : 0;
+    const bwEjec  = (Math.min(pct, 100) / 100 * wBarMax).toFixed(1);
+    const barFill = pct >= 100 ? '#C97B5B' : pct >= 50 ? '#8FA876' : pct > 0 ? '#E2B14A' : '#C8C0B4';
+    const nombre  = r.desc.length > 20 ? r.desc.substring(0, 19) + '…' : r.desc;
+    return `<text x="${wLabel - 2}" y="${cy + 3.5}" text-anchor="end" fill="#3D3935" font-size="8.5" font-family="inherit">${nombre}</text>
+      <rect x="${xBar}" y="${cy - 6}" width="${wBarMax}" height="10" rx="5" fill="#EDE5D8"/>
+      <rect x="${xBar}" y="${cy - 6}" width="${bwEjec}" height="10" rx="5" fill="${barFill}" fill-opacity="0.88"/>
+      <text x="${xPct}" y="${cy + 3.5}" fill="#8A847E" font-size="8.5" font-family="inherit">${pct}%</text>`;
+  }).join('');
+
+  const tableRows = rubros.map(r => {
+    const pct     = r.presupuestado ? Math.round(r.ejecutado / r.presupuestado * 100) : 0;
+    const restante = r.presupuestado - r.ejecutado;
+    let estado, estadoLabel;
+    if (pct >= 100)     { estado = 'aldia';     estadoLabel = 'Completado'; }
+    else if (pct >= 50) { estado = 'curso';     estadoLabel = 'En curso';   }
+    else if (pct > 0)   { estado = 'atencion';  estadoLabel = 'Iniciado';   }
+    else                { estado = 'pendiente'; estadoLabel = 'Pendiente';  }
+    const barCls = pct >= 100 ? 'terra' : pct > 0 && pct < 50 ? 'mustard' : '';
+    return `<tr>
+      <td style="color:var(--terra);font-size:11px;font-weight:700;white-space:nowrap">${r.cod}</td>
+      <td>${r.desc}</td>
+      <td class="amount">${formatPeso(r.presupuestado)}</td>
+      <td class="amount">${r.ejecutado ? formatPeso(r.ejecutado) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td><div class="pct-cell"><div class="pct-bar"><span class="${barCls}" style="width:${Math.min(pct,100)}%"></span></div><span class="pct-text">${pct}%</span></div></td>
+      <td class="amount">${formatPeso(restante)}</td>
+      <td><span class="badge ${estado}">${estadoLabel}</span></td>
+    </tr>`;
+  }).join('');
+
+  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
+    DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+
+  const bannerHtml = window._lastUpdate
+    ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
+    : `<div class="demo-banner">⚠️ Datos de ejemplo — subí tu Excel para ver datos reales</div>`;
+
+  $('pres-root').innerHTML = `
+    ${bannerHtml}
+    <div class="kpi-row-4">
+      <div class="kpi">
+        <div class="kpi-icon taupe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Presupuestado</span>
+          <span class="kpi-value">${formatPeso(totalPres)}</span>
+          <span class="kpi-sub">${PRES.cliente}</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Ejecutado</span>
+          <span class="kpi-value">${formatPeso(totalEjec)}</span>
+          <span class="kpi-sub">${pctAvance}% del presupuesto</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon terra">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H6"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Restante</span>
+          <span class="kpi-value">${formatPeso(totalRest)}</span>
+          <span class="kpi-sub">${100 - pctAvance}% del presupuesto</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M21 12A9 9 0 0 0 12 3v9z" fill="currentColor" opacity="0.4"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">% Avance General</span>
+          <span class="kpi-value">${pctAvance}%</span>
+          <div class="progress"><span style="width:${pctAvance}%"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="middle-wide">
+      <div class="panel">
+        <div class="tab-header">
+          <div class="panel-title">Detalle por Rubro</div>
+          <div class="obra-selector"><span>Obra:</span><select id="sel-presupuesto">${obraOpts}</select></div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Cód.</th><th>Descripción</th><th>Presupuestado</th><th>Ejecutado</th><th>% Ejec.</th><th>Restante</th><th>Estado</th></tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Avance por Rubro</div>
+        <div class="chart-wrap">
+          <svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">${chartRows}</svg>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// RENDER CASHFLOW
+// ============================================================
+function renderCashflow() {
+  const movs = CF.movimientos;
+
+  const totalIngresos = movs.filter(m => m.tipo === 'Ingreso').reduce((s, m) => s + m.monto, 0);
+  const totalGastos   = movs.filter(m => m.tipo === 'Gasto'  ).reduce((s, m) => s + m.monto, 0);
+  const saldo         = CF.saldoInicial + totalIngresos - totalGastos;
+  const pendienteIng  = movs.filter(m => m.tipo === 'Ingreso' && m.estado === 'Pendiente').reduce((s, m) => s + m.monto, 0);
+  const pendienteGas  = movs.filter(m => m.tipo === 'Gasto'   && m.estado === 'Pendiente').reduce((s, m) => s + m.monto, 0);
+
+  const byMonth = {};
+  movs.forEach(m => {
+    const mes = m.fecha.substring(0, 7);
+    if (!byMonth[mes]) byMonth[mes] = { ing: 0, gas: 0 };
+    if (m.tipo === 'Ingreso') byMonth[mes].ing += m.monto;
+    else                      byMonth[mes].gas += m.monto;
+  });
+  const meses = Object.keys(byMonth).sort();
+  const mesLabels = { '2026-01':'Ene','2026-02':'Feb','2026-03':'Mar','2026-04':'Abr','2026-05':'May','2026-06':'Jun' };
+
+  const maxVal = Math.max(...meses.map(m => Math.max(byMonth[m].ing, byMonth[m].gas)));
+  const cW = 380, padL = 46, padR = 8, padT = 8, padB = 28, plotH = 109;
+  const cH = padT + plotH + padB + 22;
+  const plotW = cW - padL - padR;
+  const colW = plotW / meses.length, barW = colW * 0.34;
+  const legendY = padT + plotH + padB + 13;
+
+  const gridLines = [0.25,0.5,0.75,1].map(s => {
+    const y = padT + plotH - s * plotH;
+    const lbl = (maxVal * s / 1000000).toFixed(0) + 'M';
+    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${cW-padR}" y2="${y.toFixed(1)}" stroke="#EDE5D8" stroke-width="1" stroke-dasharray="2 3"/>
+            <text x="${padL-4}" y="${(y+3.5).toFixed(1)}" text-anchor="end" fill="#8A847E" font-size="9" font-family="inherit">${lbl}</text>`;
+  }).join('');
+
+  const bars = meses.map((mes, i) => {
+    const cx   = padL + i * colW + colW / 2;
+    const ingH = byMonth[mes].ing / maxVal * plotH;
+    const gasH = byMonth[mes].gas / maxVal * plotH;
+    return `<rect x="${(cx-barW-1).toFixed(1)}" y="${(padT+plotH-ingH).toFixed(1)}" width="${barW.toFixed(1)}" height="${ingH.toFixed(1)}" rx="3" fill="#8FA876" fill-opacity="0.85"/>
+      <rect x="${(cx+1).toFixed(1)}" y="${(padT+plotH-gasH).toFixed(1)}" width="${barW.toFixed(1)}" height="${gasH.toFixed(1)}" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
+      <text x="${cx.toFixed(1)}" y="${(padT+plotH+14).toFixed(1)}" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">${mesLabels[mes]||mes}</text>`;
+  }).join('');
+
+  const chart = `<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">
+    ${gridLines}${bars}
+    <circle cx="${padL}" cy="${(legendY-3).toFixed(1)}" r="4" fill="#8FA876"/>
+    <text x="${padL+8}" y="${legendY.toFixed(1)}" fill="#8A847E" font-size="9" font-family="inherit">Ingresos</text>
+    <circle cx="${padL+65}" cy="${(legendY-3).toFixed(1)}" r="4" fill="#C97B5B"/>
+    <text x="${padL+73}" y="${legendY.toFixed(1)}" fill="#8A847E" font-size="9" font-family="inherit">Gastos</text>
+  </svg>`;
+
+  const stats = [
+    { label:'Total Ingresos',  value:formatPeso(totalIngresos), cls:'pos' },
+    { label:'Total Gastos',    value:formatPeso(totalGastos),   cls:'neg' },
+    { label:'Saldo Neto',      value:formatPeso(saldo),         cls: saldo >= 0 ? 'pos' : 'neg' },
+    { label:'Ing. Pendientes', value:formatPeso(pendienteIng),  cls:'' },
+    { label:'Gas. Pendientes', value:formatPeso(pendienteGas),  cls:'neg' },
+  ];
+  const statHTML = stats.map(s =>
+    `<div class="stat-item"><span class="stat-label">${s.label}</span><span class="stat-value ${s.cls}">${s.value}</span></div>`
+  ).join('');
+
+  const fmtF = f => { const [y,m,d] = f.split('-'); return `${d}/${m}/${y}`; };
+  const movRows = [...movs].reverse().map(m => {
+    const tipoCls   = m.tipo === 'Ingreso' ? 'tipo-ingreso' : 'tipo-gasto';
+    const estadoCls = m.estado === 'Cobrado' ? 'cobrado' : m.estado === 'Pagado' ? 'pagado' : 'pendiente-cf';
+    const signo     = m.tipo === 'Ingreso' ? '+' : '–';
+    const amtColor  = m.tipo === 'Ingreso' ? 'var(--green-dark)' : 'var(--terra)';
+    return `<tr>
+      <td style="white-space:nowrap;color:var(--text-muted)">${fmtF(m.fecha)}</td>
+      <td><span class="${tipoCls}">${m.tipo}</span></td>
+      <td style="color:var(--terra);font-size:11px;font-weight:700">${m.rubro}</td>
+      <td>${m.desc}</td>
+      <td style="color:var(--text-muted)">${m.proveedor}</td>
+      <td class="amount" style="color:${amtColor}">${signo}${formatPeso(m.monto)}</td>
+      <td><span class="badge ${estadoCls}">${m.estado}</span></td>
+    </tr>`;
+  }).join('');
+
+  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
+    DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+
+  const bannerHtml = window._lastUpdate
+    ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
+    : `<div class="demo-banner">⚠️ Datos de ejemplo — subí tu Excel para ver datos reales</div>`;
+
+  $('cf-root').innerHTML = `
+    ${bannerHtml}
+    <div class="kpi-row-4">
+      <div class="kpi">
+        <div class="kpi-icon ${saldo >= 0 ? 'green' : 'terra'}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12l4 4v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="17" cy="13" r="1.4" fill="currentColor"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Saldo Neto</span>
+          <span class="kpi-value">${formatPeso(saldo)}</span>
+          <span class="kpi-sub ${saldo >= 0 ? 'up' : 'down'}">${saldo >= 0 ? 'Positivo' : 'Negativo'}</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Ingresos</span>
+          <span class="kpi-value">${formatPeso(totalIngresos)}</span>
+          <span class="kpi-sub">${movs.filter(m => m.tipo==='Ingreso').length} movimientos</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon terra">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Gastos</span>
+          <span class="kpi-value">${formatPeso(totalGastos)}</span>
+          <span class="kpi-sub">${movs.filter(m => m.tipo==='Gasto').length} movimientos</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon taupe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Pendiente de Cobro</span>
+          <span class="kpi-value">${formatPeso(pendienteIng)}</span>
+          <span class="kpi-sub down">${formatPeso(pendienteGas)} por pagar</span>
+        </div>
+      </div>
+    </div>
+    <div class="middle-wide">
+      <div class="panel">
+        <div class="tab-header">
+          <div class="panel-title">Movimientos</div>
+          <div class="obra-selector"><span>Obra:</span><select id="sel-cashflow">${obraOpts}</select></div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Tipo</th><th>Rubro</th><th>Descripción</th><th>Proveedor</th><th>Monto</th><th>Estado</th></tr>
+          </thead>
+          <tbody>${movRows}</tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Ingresos vs Gastos por Mes</div>
+        <div class="chart-wrap" style="margin-bottom:14px;">${chart}</div>
+        <div class="stat-list">${statHTML}</div>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// RENDER TODO
+// ============================================================
+function renderAll() {
+  renderKpiTop();
+  renderTabla('tbody-dashboard');
+  renderTabla('tbody-obras');
+  renderGrafico();
+  renderKpiBottom();
+  renderPresupuesto();
+  renderCashflow();
+  poblarSelectores();
+}
+
+// ============================================================
+// NAVEGACIÓN
+// ============================================================
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', function(e) {
+    e.preventDefault();
+    const tab = this.dataset.tab;
+    document.querySelectorAll('.nav-item').forEach(a => a.classList.remove('active'));
+    this.classList.add('active');
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    $('tab-' + tab).classList.add('active');
+    $('page-title').textContent = TAB_NAMES[tab] || tab;
+  });
+});
+
+// ============================================================
+// INICIO — verificar token y cargar datos
+// ============================================================
+const token = getToken();
+if (token) {
+  document.getElementById('login-overlay').classList.add('hidden');
+  loadData();
+}
+// Si no hay token, la login-overlay ya está visible por defecto
+
+</script>
+</body>
+</html>
