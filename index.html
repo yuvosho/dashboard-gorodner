@@ -112,11 +112,11 @@
   .tab-section.active { display: flex; }
 
   /* KPI ROW */
-  .kpi-row   { display: flex; flex-wrap: nowrap; gap: 16px; }
-  .kpi-row-4 { display: flex; flex-wrap: nowrap; gap: 16px; }
-  .kpi-row > .kpi   { flex: 1 1 0; min-width: 0; }
-  .kpi-row-4 > .kpi { flex: 1 1 0; min-width: 0; }
-  .kpi { background: var(--card-bg); border-radius: 10px; padding: 16px 18px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(60,50,40,0.07); min-width: 0; }
+  .kpi-row   { display: flex; flex-wrap: wrap; gap: 20px; }
+  .kpi-row-4 { display: flex; flex-wrap: wrap; gap: 20px; }
+  .kpi-row > .kpi   { flex: 1 1 180px; min-width: 0; }
+  .kpi-row-4 > .kpi { flex: 1 1 200px; min-width: 0; }
+  .kpi { background: var(--card-bg); border-radius: 10px; padding: 16px 18px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(60,50,40,0.09); min-width: 0; }
   .kpi-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .kpi-icon svg { width: 18px; height: 18px; color: #fff; }
   .kpi-icon.green { background: var(--green); }
