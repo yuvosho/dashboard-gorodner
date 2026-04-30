@@ -336,6 +336,22 @@
   .btn-green  { background: var(--green);  color: #fff; }
   .btn-green:hover  { background: var(--green-dark); }
 
+  /* ======= TAB DATOS ======= */
+  .datos-btn { padding: 5px 12px; border: none; border-radius: 5px; font-size: 11.5px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.15s; }
+  .edit-btn   { background: var(--taupe-soft);  color: var(--taupe); }
+  .edit-btn:hover { background: var(--taupe); color: #fff; }
+  .save-btn   { background: var(--green-soft);  color: var(--green-dark); }
+  .save-btn:hover { background: var(--green); color: #fff; }
+  .cancel-btn { background: var(--border); color: var(--text-muted); }
+  .del-btn    { background: var(--terra-soft);  color: var(--terra); }
+  .del-btn:hover  { background: var(--terra); color: #fff; }
+  .merge-btn  { background: var(--mustard-soft); color: #7a5c10; padding: 8px 18px; font-size: 12.5px; }
+  .merge-btn:hover { background: var(--mustard); color: #fff; }
+  .datos-input { width: 100%; padding: 5px 8px; border: 1px solid var(--terra); border-radius: 5px; font-size: 12.5px; font-family: inherit; background: var(--bg); color: var(--text); outline: none; }
+  .datos-select { border: 1px solid var(--border); border-radius: 6px; padding: 8px 28px 8px 10px; font-size: 12.5px; color: var(--text); background: var(--bg); font-family: inherit; outline: none; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A847E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; min-width: 220px; cursor: pointer; }
+  .datos-nombre { display: inline-block; }
+  .hidden { display: none !important; }
+
   /* RESPONSIVE */
   @media (max-width: 1100px) {
     .kpi-row   { flex-wrap: wrap; }
@@ -420,6 +436,14 @@
     </a>
 
     <div class="nav-group-label">Administración</div>
+
+    <a class="nav-item" data-tab="datos">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+      </svg>
+      Datos
+    </a>
 
     <a class="nav-item" data-tab="proveedores">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -510,6 +534,11 @@
     <!-- ======= TAB: CASHFLOW ======= -->
     <div id="tab-cashflow" class="tab-section">
       <div id="cf-root"></div>
+    </div>
+
+    <!-- ======= TAB: DATOS ======= -->
+    <div id="tab-datos" class="tab-section">
+      <div id="datos-root"></div>
     </div>
 
     <!-- ======= TAB: PROVEEDORES ======= -->
@@ -683,40 +712,55 @@ async function loadData() {
 }
 
 // ============================================================
-// APLICAR DATOS DEL EXCEL A LAS VARIABLES
+// APLICAR DATOS DEL SERVIDOR A LAS VARIABLES
 // ============================================================
 function applyData(data) {
-  if (!data) return;
+  if (!data || !data.obras) return;
+  OBRAS = data.obras;
 
-  // Actualizar PRES con datos reales del Excel
-  if (data.rubros && data.rubros.length > 0) {
-    PRES.obra    = data.obra    || PRES.obra;
-    PRES.cliente = data.cliente || PRES.cliente;
-    PRES.rubros  = data.rubros;
+  // Calcular DATOS.obras para el dashboard a partir de los rubros
+  DATOS.obras = OBRAS.map(o => {
+    const totalPres = o.rubros.reduce((s, r) => s + (r.presupuestado || 0), 0);
+    const totalEjec = o.rubros.reduce((s, r) => s + (r.ejecutado    || 0), 0);
+    const pct       = totalPres ? Math.round(totalEjec / totalPres * 100) : 0;
+    const estado    = pct >= 100 ? 'aldia' : pct >= 60 ? 'curso' : pct >= 20 ? 'atencion' : 'pendiente';
+    return { id: o.id, nombre: o.nombre, cliente: o.cliente || '', presupuesto: totalPres, costoReal: totalEjec, ejecucion: pct, estado };
+  });
+
+  // Seleccionar primer obra para PRES (o mantener la seleccionada)
+  const obraSeleccionada = PRES_ID ? OBRAS.find(o => o.id === PRES_ID) : OBRAS[0];
+  if (obraSeleccionada) {
+    PRES_ID      = obraSeleccionada.id;
+    PRES.obra    = obraSeleccionada.nombre;
+    PRES.cliente = obraSeleccionada.cliente || '';
+    PRES.rubros  = obraSeleccionada.rubros  || [];
   }
 
-  // Mostrar info de la última actualización
-  if (data.updatedAt) {
-    const d = new Date(data.updatedAt);
-    const fmt = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
-    window._lastUpdate = fmt;
-    window._lastUser   = data.updatedBy || '';
+  // Info de última actualización
+  const last = OBRAS.slice().sort((a, b) => (b.updatedAt||'').localeCompare(a.updatedAt||''))[0];
+  if (last && last.updatedAt) {
+    const d = new Date(last.updatedAt);
+    window._lastUpdate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+    window._lastUser   = last.updatedBy || '';
   }
 }
 
 // ============================================================
 // DATOS — vacíos hasta que se suba un Excel
 // ============================================================
+let OBRAS = []; // array de obras del servidor
+
 const DATOS = {
   kpis: { ingresosTotales: 0, costosTotales: 0, saldoCaja: 0, varIngresos: '—', varCostos: '—', varResultado: '—' },
   obras: []
 };
 
-const PRES = { obra: '', cliente: '', rubros: [] };
+let PRES = { obra: '', cliente: '', rubros: [] };
+let PRES_ID = null; // id de la obra seleccionada en presupuesto
 
-const CF   = { saldoInicial: 0, movimientos: [] };
+const CF = { saldoInicial: 0, movimientos: [] };
 
-// HTML del estado vacío (se usa en varios tabs)
+// HTML del estado vacío
 function emptyState(msg) {
   return `<div class="placeholder-panel">
     <div class="ph-icon">📂</div>
@@ -742,6 +786,7 @@ const TAB_NAMES = {
   obras:       'Obras',
   presupuesto: 'Presupuesto',
   cashflow:    'Cashflow',
+  datos:       'Datos',
   proveedores: 'Proveedores',
   reportes:    'Reportes'
 };
@@ -943,11 +988,18 @@ function renderGrafico() {
 // POBLAR SELECTORES
 // ============================================================
 function poblarSelectores() {
-  const opciones = DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
-  const base = '<option value="">— Seleccionar obra —</option>' + opciones;
-  ['sel-presupuesto', 'sel-cashflow', 'sel-proveedores'].forEach(id => {
+  // Presupuesto usa IDs de OBRAS (para cambiar la obra activa)
+  const elPres = $('sel-presupuesto');
+  if (elPres) {
+    elPres.innerHTML = '<option value="">— Seleccionar obra —</option>' +
+      OBRAS.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
+  }
+  // Cashflow y Proveedores usan nombre (filtro visual, sin lógica aún)
+  const opcNombre = '<option value="">— Seleccionar obra —</option>' +
+    DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+  ['sel-cashflow', 'sel-proveedores'].forEach(id => {
     const el = $(id);
-    if (el) el.innerHTML = base;
+    if (el) el.innerHTML = opcNombre;
   });
 }
 
@@ -1234,6 +1286,195 @@ function renderCashflow() {
 }
 
 // ============================================================
+// RENDER DATOS
+// ============================================================
+function renderDatos() {
+  const root = $('datos-root');
+  if (!root) return;
+
+  if (!OBRAS.length) {
+    root.innerHTML = emptyState('Subí el Excel para ver y gestionar las obras cargadas.');
+    return;
+  }
+
+  const obrasOpts = OBRAS.map(o => `<option value="${o.id}">${o.nombre}</option>`).join('');
+
+  const filas = OBRAS.map(o => {
+    const totalPres = o.rubros.reduce((s, r) => s + (r.presupuestado || 0), 0);
+    const totalEjec = o.rubros.reduce((s, r) => s + (r.ejecutado    || 0), 0);
+    const pct       = totalPres ? Math.round(totalEjec / totalPres * 100) : 0;
+    const upd       = o.updatedAt ? new Date(o.updatedAt).toLocaleDateString('es-AR') : '—';
+    return `
+    <tr id="fila-${o.id}">
+      <td>
+        <span class="datos-nombre" id="nombre-${o.id}">${o.nombre}</span>
+        <input class="datos-input hidden" id="input-nombre-${o.id}" value="${o.nombre}">
+      </td>
+      <td>
+        <span class="datos-nombre" id="cliente-${o.id}">${o.cliente || '—'}</span>
+        <input class="datos-input hidden" id="input-cliente-${o.id}" value="${o.cliente || ''}">
+      </td>
+      <td style="text-align:center">${o.rubros.length}</td>
+      <td style="text-align:right">${formatPeso(totalPres)}</td>
+      <td style="text-align:right">${formatPeso(totalEjec)}</td>
+      <td style="text-align:center">
+        <div class="pct-cell" style="justify-content:center">
+          <div class="pct-bar" style="max-width:50px"><span style="width:${pct}%"></span></div>
+          <span class="pct-text">${pct}%</span>
+        </div>
+      </td>
+      <td style="color:var(--text-muted);font-size:11px;text-align:center">${upd}<br><span style="font-size:10px">${o.updatedBy||''}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="datos-btn edit-btn"  onclick="editarObra('${o.id}')" id="btn-edit-${o.id}">Editar</button>
+          <button class="datos-btn save-btn hidden" onclick="guardarObra('${o.id}')" id="btn-save-${o.id}">Guardar</button>
+          <button class="datos-btn cancel-btn hidden" onclick="cancelarEdicion('${o.id}')" id="btn-cancel-${o.id}">Cancelar</button>
+          <button class="datos-btn del-btn"   onclick="eliminarObra('${o.id}', '${o.nombre.replace(/'/g,"\\'")}')">Eliminar</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  root.innerHTML = `
+    <div class="panel">
+      <div class="panel-title">Obras cargadas</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre de la obra</th>
+            <th>Cliente</th>
+            <th style="text-align:center">Rubros</th>
+            <th style="text-align:right">Presupuestado</th>
+            <th style="text-align:right">Ejecutado</th>
+            <th style="text-align:center">% Avance</th>
+            <th style="text-align:center">Última actualización</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Asociar obras</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.7">
+        Si el mismo proyecto fue subido dos veces con nombres distintos, podés fusionarlos en uno solo.<br>
+        Los rubros del <strong>Secundario</strong> se incorporan al <strong>Principal</strong> y el secundario se elimina.
+      </p>
+      <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+        <div>
+          <label style="display:block;font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px">Obra principal (se mantiene)</label>
+          <select id="merge-keep" class="datos-select">${obrasOpts}</select>
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px">Obra secundaria (se elimina)</label>
+          <select id="merge-delete" class="datos-select">${obrasOpts}</select>
+        </div>
+        <button class="datos-btn merge-btn" onclick="asociarObras()">Fusionar obras</button>
+      </div>
+    </div>`;
+}
+
+// -------- Acciones de la tab Datos --------
+
+function editarObra(id) {
+  ['nombre','cliente'].forEach(field => {
+    $(`${field}-${id}`).classList.add('hidden');
+    $(`input-${field}-${id}`).classList.remove('hidden');
+  });
+  $(`btn-edit-${id}`).classList.add('hidden');
+  $(`btn-save-${id}`).classList.remove('hidden');
+  $(`btn-cancel-${id}`).classList.remove('hidden');
+}
+
+function cancelarEdicion(id) {
+  const obra = OBRAS.find(o => o.id === id);
+  if (!obra) return;
+  $(`input-nombre-${id}`).value  = obra.nombre;
+  $(`input-cliente-${id}`).value = obra.cliente || '';
+  ['nombre','cliente'].forEach(field => {
+    $(`${field}-${id}`).classList.remove('hidden');
+    $(`input-${field}-${id}`).classList.add('hidden');
+  });
+  $(`btn-edit-${id}`).classList.remove('hidden');
+  $(`btn-save-${id}`).classList.add('hidden');
+  $(`btn-cancel-${id}`).classList.add('hidden');
+}
+
+async function guardarObra(id) {
+  const nombre  = $(`input-nombre-${id}`).value.trim();
+  const cliente = $(`input-cliente-${id}`).value.trim();
+  if (!nombre) { showToast('El nombre no puede estar vacío', 'error'); return; }
+
+  try {
+    const res  = await fetch(`/api/obras/${id}`, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body:    JSON.stringify({ nombre, cliente })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    // Actualizar local
+    const obra = OBRAS.find(o => o.id === id);
+    if (obra) { obra.nombre = nombre; obra.cliente = cliente; }
+    DATOS.obras.forEach(o => { if (o.id === id) { o.nombre = nombre; o.cliente = cliente; } });
+
+    showToast('✅ Obra actualizada', 'success');
+    renderDatos();
+    poblarSelectores();
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+async function eliminarObra(id, nombre) {
+  if (!confirm(`¿Eliminar la obra "${nombre}"?\nEsta acción no se puede deshacer.`)) return;
+  try {
+    const res = await fetch(`/api/obras/${id}`, {
+      method:  'DELETE',
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    OBRAS = OBRAS.filter(o => o.id !== id);
+    DATOS.obras = DATOS.obras.filter(o => o.id !== id);
+    if (PRES_ID === id) { PRES_ID = null; PRES = { obra: '', cliente: '', rubros: [] }; }
+
+    showToast('✅ Obra eliminada', 'success');
+    renderAll();
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+async function asociarObras() {
+  const keepId   = $('merge-keep').value;
+  const deleteId = $('merge-delete').value;
+  if (keepId === deleteId) { showToast('Seleccioná dos obras distintas', 'error'); return; }
+  const keepNombre = OBRAS.find(o => o.id === keepId)?.nombre || '';
+  const delNombre  = OBRAS.find(o => o.id === deleteId)?.nombre || '';
+  if (!confirm(`¿Fusionar "${delNombre}" en "${keepNombre}"?\nEl secundario se eliminará.`)) return;
+
+  try {
+    const res  = await fetch('/api/obras/merge', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body:    JSON.stringify({ keepId, deleteId })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    showToast('✅ Obras fusionadas', 'success');
+    applyData(data.data);
+    renderAll();
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+// ============================================================
 // RENDER TODO
 // ============================================================
 function renderAll() {
@@ -1244,8 +1485,26 @@ function renderAll() {
   renderKpiBottom();
   renderPresupuesto();
   renderCashflow();
+  renderDatos();
   poblarSelectores();
 }
+
+// ============================================================
+// SELECTOR DE OBRA EN PRESUPUESTO — funcional
+// ============================================================
+document.addEventListener('change', function(e) {
+  if (e.target.id === 'sel-presupuesto') {
+    const obraId = e.target.value;
+    const obra   = OBRAS.find(o => o.id === obraId);
+    if (obra) {
+      PRES_ID      = obra.id;
+      PRES.obra    = obra.nombre;
+      PRES.cliente = obra.cliente || '';
+      PRES.rubros  = obra.rubros  || [];
+      renderPresupuesto();
+    }
+  }
+});
 
 // ============================================================
 // NAVEGACIÓN
