@@ -705,69 +705,25 @@ function applyData(data) {
 }
 
 // ============================================================
-// DATOS DEMO (fallback cuando no hay Excel subido)
+// DATOS — vacíos hasta que se suba un Excel
 // ============================================================
 const DATOS = {
-  kpis: {
-    ingresosTotales: 38760000,
-    costosTotales:   27450000,
-    saldoCaja:        8250000,
-    varIngresos:   "+12%",
-    varCostos:      "+8%",
-    varResultado:  "+20%"
-  },
-  obras: [
-    { nombre: "Casa Olivos",             cliente: "Fam. Gómez",                presupuesto: 18500000, costoReal: 12850000, ejecucion: 69, estado: "curso"    },
-    { nombre: "Oficinas Belgrano",        cliente: "Belgrano Corp.",            presupuesto: 26000000, costoReal: 17600000, ejecucion: 68, estado: "curso"    },
-    { nombre: "Local Nordelta",           cliente: "Emprendimientos del Norte", presupuesto:  9800000, costoReal:  6500000, ejecucion: 66, estado: "exceso"   },
-    { nombre: "Vivienda Los Alisos",      cliente: "Fam. Rodríguez",            presupuesto: 15200000, costoReal:  9900000, ejecucion: 70, estado: "curso"    },
-    { nombre: "Remodelación Palermo",     cliente: "Estudio Jurídico Lex",      presupuesto:  6400000, costoReal:  4100000, ejecucion: 64, estado: "atencion" },
-    { nombre: "Casa Pilar",              cliente: "Fam. Santoro",              presupuesto: 22000000, costoReal: 13800000, ejecucion: 63, estado: "curso"    }
-  ]
+  kpis: { ingresosTotales: 0, costosTotales: 0, saldoCaja: 0, varIngresos: '—', varCostos: '—', varResultado: '—' },
+  obras: []
 };
 
-const PRES = {
-  obra:    'Av. Santa Fe 1970 Piso 4to A',
-  cliente: 'Analia Demonte',
-  rubros: [
-    { cod:'1-00',  desc:'TRABAJOS PRELIMINARES',            presupuestado:687750,   ejecutado:687750   },
-    { cod:'2-00',  desc:'DEMOLICIÓN Y ALBAÑILERÍA',         presupuestado:14192325, ejecutado:11211937 },
-    { cod:'3-00',  desc:'TABIQUERÍA DE DURLOCK',            presupuestado:2559375,  ejecutado:2098688  },
-    { cod:'4-00',  desc:'CIELORRASO DE DURLOCK',            presupuestado:2386125,  ejecutado:1789594  },
-    { cod:'5-00',  desc:'SOLADOS + REVESTIMIENTOS',         presupuestado:7412492,  ejecutado:4225120  },
-    { cod:'6-00',  desc:'PINTURA',                          presupuestado:7581000,  ejecutado:0        },
-    { cod:'7-00',  desc:'SANITARIAS',                       presupuestado:4114900,  ejecutado:3209622  },
-    { cod:'8-00',  desc:'INSTALACIÓN ELÉCTRICA',            presupuestado:5045250,  ejecutado:3783938  },
-    { cod:'9-00',  desc:'ARTEFACTOS ELÉCT. / ILUMINACIÓN', presupuestado:6667000,  ejecutado:0        },
-    { cod:'10-00', desc:'AIRE ACONDICIONADO',               presupuestado:1302000,  ejecutado:0        },
-    { cod:'11-00', desc:'CARPINTERÍA',                      presupuestado:10181750, ejecutado:0        },
-    { cod:'12-00', desc:'JOHNSON - COCINA',                 presupuestado:28391957, ejecutado:28391957 },
-    { cod:'13-00', desc:'ACCESORIOS',                       presupuestado:979700,   ejecutado:0        },
-    { cod:'14-00', desc:'VARIOS',                           presupuestado:787500,   ejecutado:346500   },
-    { cod:'15-00', desc:'GASTOS GENERALES (15%)',           presupuestado:14301112, ejecutado:0        },
-  ]
-};
+const PRES = { obra: '', cliente: '', rubros: [] };
 
-const CF = {
-  saldoInicial: 0,
-  movimientos: [
-    { fecha:'2026-01-15', tipo:'Ingreso', rubro:'12-00', desc:'JOHNSON - COCINA',      proveedor:'Cliente',        monto:28391957, estado:'Cobrado'   },
-    { fecha:'2026-01-20', tipo:'Gasto',   rubro:'12-00', desc:'JOHNSON - COCINA',      proveedor:'Johnson S.A.',   monto:28391957, estado:'Pagado'    },
-    { fecha:'2026-02-05', tipo:'Ingreso', rubro:'2-00',  desc:'DEMOLICIÓN Y ALBAÑ.',   proveedor:'Cliente',        monto:7096162,  estado:'Cobrado'   },
-    { fecha:'2026-02-10', tipo:'Gasto',   rubro:'2-00',  desc:'DEMOLICIÓN Y ALBAÑ.',   proveedor:'Const. Morales', monto:5600000,  estado:'Pagado'    },
-    { fecha:'2026-02-15', tipo:'Gasto',   rubro:'1-00',  desc:'TRABAJOS PRELIMINARES', proveedor:'Const. Morales', monto:687750,   estado:'Pagado'    },
-    { fecha:'2026-03-01', tipo:'Ingreso', rubro:'7-00',  desc:'SANITARIAS',            proveedor:'Cliente',        monto:2057450,  estado:'Cobrado'   },
-    { fecha:'2026-03-05', tipo:'Gasto',   rubro:'7-00',  desc:'SANITARIAS',            proveedor:'HidroSur',       monto:3209622,  estado:'Pagado'    },
-    { fecha:'2026-03-10', tipo:'Gasto',   rubro:'8-00',  desc:'INSTALACIÓN ELÉCTRICA', proveedor:'ElectroPro',     monto:3783938,  estado:'Pagado'    },
-    { fecha:'2026-04-01', tipo:'Ingreso', rubro:'3-00',  desc:'TABIQUERÍA DURLOCK',    proveedor:'Cliente',        monto:2559375,  estado:'Cobrado'   },
-    { fecha:'2026-04-05', tipo:'Gasto',   rubro:'3-00',  desc:'TABIQUERÍA DURLOCK',    proveedor:'DryWall S.A.',   monto:2098688,  estado:'Pagado'    },
-    { fecha:'2026-04-10', tipo:'Gasto',   rubro:'4-00',  desc:'CIELORRASO DURLOCK',    proveedor:'DryWall S.A.',   monto:1789594,  estado:'Pagado'    },
-    { fecha:'2026-04-15', tipo:'Ingreso', rubro:'5-00',  desc:'SOLADOS Y REVESTIM.',   proveedor:'Cliente',        monto:3706246,  estado:'Cobrado'   },
-    { fecha:'2026-04-20', tipo:'Gasto',   rubro:'5-00',  desc:'SOLADOS Y REVESTIM.',   proveedor:'Pisos & Más',    monto:4225120,  estado:'Pagado'    },
-    { fecha:'2026-04-25', tipo:'Ingreso', rubro:'8-00',  desc:'INSTALACIÓN ELÉCTRICA', proveedor:'Cliente',        monto:2522625,  estado:'Pendiente' },
-    { fecha:'2026-04-27', tipo:'Gasto',   rubro:'14-00', desc:'VARIOS',                proveedor:'Varios',         monto:346500,   estado:'Pendiente' },
-  ]
-};
+const CF   = { saldoInicial: 0, movimientos: [] };
+
+// HTML del estado vacío (se usa en varios tabs)
+function emptyState(msg) {
+  return `<div class="placeholder-panel">
+    <div class="ph-icon">📂</div>
+    <div class="ph-title">Sin datos cargados</div>
+    <div class="ph-sub">${msg}</div>
+  </div>`;
+}
 
 // ============================================================
 // UTILIDADES
@@ -810,7 +766,7 @@ function calcularTotales() {
 function renderKpiTop() {
   const k = DATOS.kpis;
   const c = calcularTotales();
-  const resultado = k.ingresosTotales - k.costosTotales;
+  const resultado = (k.ingresosTotales || 0) - (k.costosTotales || 0);
   $('kpi-top').innerHTML = `
     <div class="kpi">
       <div class="kpi-icon green">
@@ -929,6 +885,10 @@ function renderKpiBottom() {
 // RENDER TABLA
 // ============================================================
 function renderTabla(tbodyId) {
+  if (!DATOS.obras.length) {
+    $(tbodyId).innerHTML = `<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--text-muted)">Subí el Excel para ver las obras</td></tr>`;
+    return;
+  }
   $(tbodyId).innerHTML = DATOS.obras.map(o => {
     const resultado = o.presupuesto - o.costoReal;
     return `<tr>
@@ -953,7 +913,10 @@ function renderTabla(tbodyId) {
 // ============================================================
 function renderGrafico() {
   const obras = DATOS.obras;
-  if (!obras.length) { $('grafico-wrap').innerHTML = ''; return; }
+  if (!obras.length) {
+    $('grafico-wrap').innerHTML = `<div style="padding:36px 0;text-align:center;color:var(--text-muted);font-size:12px;">Sin datos</div>`;
+    return;
+  }
 
   const rowH = 40, padTop = 6, padBot = 6;
   const xLabel = 0, wLabel = 148;
@@ -992,6 +955,10 @@ function poblarSelectores() {
 // RENDER PRESUPUESTO
 // ============================================================
 function renderPresupuesto() {
+  if (!PRES.rubros.length) {
+    $('pres-root').innerHTML = emptyState('Usá el botón <strong>Subir Excel</strong> para cargar el presupuesto de la obra.');
+    return;
+  }
   const rubros    = PRES.rubros;
   const totalPres = rubros.reduce((s, r) => s + r.presupuestado, 0);
   const totalEjec = rubros.reduce((s, r) => s + r.ejecutado,     0);
@@ -1113,6 +1080,10 @@ function renderPresupuesto() {
 // RENDER CASHFLOW
 // ============================================================
 function renderCashflow() {
+  if (!CF.movimientos.length) {
+    $('cf-root').innerHTML = emptyState('Usá el botón <strong>Subir Excel</strong> para cargar los movimientos de caja.');
+    return;
+  }
   const movs = CF.movimientos;
 
   const totalIngresos = movs.filter(m => m.tipo === 'Ingreso').reduce((s, m) => s + m.monto, 0);
