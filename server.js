@@ -204,14 +204,14 @@ function parseExcel(wb, uploadedBy) {
     rows.slice(0, 40).forEach((r, i) => { if (r.some(c => c !== '')) console.log(`  [${i}]`, r.slice(0,10).map(c => String(c).substring(0,25))); });
 
     for (const row of rows) {
-      const joined = row.map(c => String(c).toLowerCase()).join('|');
-      if (!result.obra    && joined.includes('obra'))    { const v = row.find((c,i) => i>0 && String(c).trim().length>3 && typeof c==='string'); if (v) result.obra    = String(v).trim(); }
-      if (!result.cliente && joined.includes('cliente')) { const v = row.find((c,i) => i>0 && String(c).trim().length>3 && typeof c==='string'); if (v) result.cliente = String(v).trim(); }
-      if (!result.tc      && joined.includes('tc'))      { const v = row.find((c,i) => i>0 && !isNaN(parseFloat(c)) && parseFloat(c)>100); if (v) result.tc = parseFloat(v); }
+      const label0 = String(row[0]||'').toLowerCase();
+      if (!result.obra    && label0.includes('obra'))    { const v = row.find((c,i) => i>0 && String(c).trim().length>3 && typeof c==='string'); if (v) result.obra    = String(v).trim(); }
+      if (!result.cliente && label0.includes('cliente')) { const v = row.find((c,i) => i>0 && String(c).trim().length>3 && typeof c==='string'); if (v) result.cliente = String(v).trim(); }
+      if (!result.tc      && label0.includes('tc'))      { const v = row.find((c,i) => i>0 && !isNaN(parseFloat(c)) && parseFloat(c)>100); if (v) result.tc = parseFloat(v); }
 
       const firstCell = String(row[0]||'').trim();
       if (RUBRO_CODES.includes(firstCell)) {
-        const nums = row.map(c => parseFloat(String(c).replace(/[$ .']/g,'').replace(',','.'))).filter(n => !isNaN(n) && n > 0);
+        const nums = row.slice(1).map(c => parseFloat(String(c).replace(/[$ .']/g,'').replace(',','.'))).filter(n => !isNaN(n) && n > 0);
         const desc = row.find((c,i) => i>0 && typeof c==='string' && c.trim().length>3) || '';
         result.rubros.push({ cod: firstCell, desc: String(desc).trim(), presupuestado: nums[0]||0, ejecutado: nums[1]||0 });
       }
