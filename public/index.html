@@ -723,11 +723,35 @@ async function loadData() {
 // ============================================================
 // APLICAR DATOS DEL SERVIDOR A LAS VARIABLES
 // ============================================================
+function calcEjecutadoDesideCashflow(obra) {
+  // Suma los montos de Gastos por código de rubro/sub-ítem
+  const gastos = {};
+  (obra.cashflow || []).forEach(m => {
+    if (m.tipo === 'Gasto') {
+      gastos[m.rubro] = (gastos[m.rubro] || 0) + m.monto;
+    }
+  });
+  // Aplica a rubros principales y sub-ítems
+  (obra.rubros || []).forEach(r => {
+    r.ejecutado = gastos[r.cod] || 0;
+    (r.items || []).forEach(item => {
+      item.ejecutado = gastos[item.cod] || 0;
+    });
+    // Si hay gastos en sub-ítems pero no en el rubro principal, sumar los sub-ítems
+    if (!r.ejecutado && r.items && r.items.some(i => i.ejecutado > 0)) {
+      r.ejecutado = r.items.reduce((s, i) => s + i.ejecutado, 0);
+    }
+  });
+}
+
 function applyData(data) {
   if (!data || !data.obras) return;
   OBRAS = data.obras;
 
-  // Calcular DATOS.obras para el dashboard a partir de los rubros
+  // Calcular ejecutado desde cashflow para cada obra (gastos → presupuesto)
+  OBRAS.forEach(o => calcEjecutadoDesideCashflow(o));
+
+  // Calcular DATOS.obras para el dashboard a partir de los rubros (con ejecutado ya calculado)
   DATOS.obras = OBRAS.map(o => {
     const totalPres = o.rubros.reduce((s, r) => s + (r.presupuestado || 0), 0);
     const totalEjec = o.rubros.reduce((s, r) => s + (r.ejecutado    || 0), 0);
@@ -736,14 +760,13 @@ function applyData(data) {
     return { id: o.id, nombre: o.nombre, cliente: o.cliente || '', presupuesto: totalPres, costoReal: totalEjec, ejecucion: pct, estado };
   });
 
-  // Seleccionar primer obra para PRES (o mantener la seleccionada)
+  // Seleccionar primera obra para PRES (o mantener la seleccionada)
   const obraSeleccionada = PRES_ID ? OBRAS.find(o => o.id === PRES_ID) : OBRAS[0];
   if (obraSeleccionada) {
-    PRES_ID      = obraSeleccionada.id;
-    PRES.obra    = obraSeleccionada.nombre;
-    PRES.cliente = obraSeleccionada.cliente || '';
-    PRES.rubros  = obraSeleccionada.rubros  || [];
-    // Cashflow de la obra seleccionada
+    PRES_ID        = obraSeleccionada.id;
+    PRES.obra      = obraSeleccionada.nombre;
+    PRES.cliente   = obraSeleccionada.cliente || '';
+    PRES.rubros    = obraSeleccionada.rubros  || [];
     CF.movimientos = obraSeleccionada.cashflow || [];
   }
 
@@ -1545,25 +1568,18 @@ function renderAll() {
 // SELECTOR DE OBRA EN PRESUPUESTO — funcional
 // ============================================================
 document.addEventListener('change', function(e) {
-  if (e.target.id === 'sel-presupuesto') {
+  if (e.target.id === 'sel-presupuesto' || e.target.id === 'sel-cashflow') {
     const obraId = e.target.value;
     const obra   = OBRAS.find(o => o.id === obraId);
     if (obra) {
+      calcEjecutadoDesideCashflow(obra);
       PRES_ID        = obra.id;
       PRES.obra      = obra.nombre;
       PRES.cliente   = obra.cliente  || '';
       PRES.rubros    = obra.rubros   || [];
       CF.movimientos = obra.cashflow || [];
-      renderPresupuesto();
-    }
-  }
-  if (e.target.id === 'sel-cashflow') {
-    const obraId = e.target.value;
-    const obra   = OBRAS.find(o => o.id === obraId);
-    if (obra) {
-      PRES_ID        = obra.id;
-      CF.movimientos = obra.cashflow || [];
-      renderCashflow();
+      if (e.target.id === 'sel-presupuesto') renderPresupuesto();
+      else renderCashflow();
     }
   }
 });
