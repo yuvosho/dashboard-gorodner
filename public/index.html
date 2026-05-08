@@ -743,14 +743,20 @@ function applyData(data) {
     PRES.obra    = obraSeleccionada.nombre;
     PRES.cliente = obraSeleccionada.cliente || '';
     PRES.rubros  = obraSeleccionada.rubros  || [];
+    // Cashflow de la obra seleccionada
+    CF.movimientos = obraSeleccionada.cashflow || [];
   }
 
   // Info de última actualización
   const last = OBRAS.slice().sort((a, b) => (b.updatedAt||'').localeCompare(a.updatedAt||''))[0];
-  if (last && last.updatedAt) {
-    const d = new Date(last.updatedAt);
-    window._lastUpdate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
-    window._lastUser   = last.updatedBy || '';
+  if (last) {
+    if (last.updatedAt) {
+      const d = new Date(last.updatedAt);
+      window._lastUpdate = d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+    } else {
+      window._lastUpdate = 'datos cargados';
+    }
+    window._lastUser = last.updatedBy || '';
   }
 }
 
@@ -1003,13 +1009,18 @@ function poblarSelectores() {
     elPres.innerHTML = '<option value="">— Seleccionar obra —</option>' +
       OBRAS.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
   }
-  // Cashflow y Proveedores usan nombre (filtro visual, sin lógica aún)
-  const opcNombre = '<option value="">— Seleccionar obra —</option>' +
-    DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
-  ['sel-cashflow', 'sel-proveedores'].forEach(id => {
-    const el = $(id);
-    if (el) el.innerHTML = opcNombre;
-  });
+  // Cashflow — mismo sistema que Presupuesto (por ID)
+  const elCf = $('sel-cashflow');
+  if (elCf) {
+    elCf.innerHTML = '<option value="">— Seleccionar obra —</option>' +
+      OBRAS.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
+  }
+  // Proveedores — por nombre (visual)
+  const elProv = $('sel-proveedores');
+  if (elProv) {
+    elProv.innerHTML = '<option value="">— Seleccionar obra —</option>' +
+      OBRAS.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+  }
 }
 
 // ============================================================
@@ -1083,9 +1094,11 @@ function renderPresupuesto() {
   const obraOpts = '<option value="">— Seleccionar obra —</option>' +
     DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
 
-  const bannerHtml = window._lastUpdate
+  const bannerHtml = window._lastUser
     ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
-    : `<div class="demo-banner">⚠️ Datos de ejemplo — subí tu Excel para ver datos reales</div>`;
+    : window._lastUpdate
+    ? `<div class="data-banner">✅ Datos reales — ${window._lastUpdate}</div>`
+    : `<div class="data-banner">✅ Datos cargados</div>`;
 
   $('pres-root').innerHTML = `
     ${bannerHtml}
@@ -1253,9 +1266,11 @@ function renderCashflow() {
   const obraOpts = '<option value="">— Seleccionar obra —</option>' +
     DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
 
-  const bannerHtml = window._lastUpdate
+  const bannerHtml = window._lastUser
     ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
-    : `<div class="demo-banner">⚠️ Datos de ejemplo — subí tu Excel para ver datos reales</div>`;
+    : window._lastUpdate
+    ? `<div class="data-banner">✅ Datos reales — ${window._lastUpdate}</div>`
+    : `<div class="data-banner">✅ Datos cargados</div>`;
 
   $('cf-root').innerHTML = `
     ${bannerHtml}
@@ -1534,11 +1549,21 @@ document.addEventListener('change', function(e) {
     const obraId = e.target.value;
     const obra   = OBRAS.find(o => o.id === obraId);
     if (obra) {
-      PRES_ID      = obra.id;
-      PRES.obra    = obra.nombre;
-      PRES.cliente = obra.cliente || '';
-      PRES.rubros  = obra.rubros  || [];
+      PRES_ID        = obra.id;
+      PRES.obra      = obra.nombre;
+      PRES.cliente   = obra.cliente  || '';
+      PRES.rubros    = obra.rubros   || [];
+      CF.movimientos = obra.cashflow || [];
       renderPresupuesto();
+    }
+  }
+  if (e.target.id === 'sel-cashflow') {
+    const obraId = e.target.value;
+    const obra   = OBRAS.find(o => o.id === obraId);
+    if (obra) {
+      PRES_ID        = obra.id;
+      CF.movimientos = obra.cashflow || [];
+      renderCashflow();
     }
   }
 });

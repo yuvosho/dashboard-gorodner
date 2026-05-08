@@ -120,6 +120,7 @@ app.post('/api/upload', auth, upload.single('excel'), (req, res) => {
       cliente:   parsed.cliente || '',
       tc:        parsed.tc || 0,
       rubros:    parsed.rubros,
+      cashflow:  parsed.cashflow,
       updatedAt: parsed.updatedAt,
       updatedBy: parsed.updatedBy
     };
@@ -209,11 +210,33 @@ function parseNum(val) {
   return isNaN(result) ? 0 : Math.round(result * 100) / 100;
 }
 
+// Normaliza una fecha de Excel a string "YYYY-MM-DD"
+function parseFecha(val) {
+  if (!val) return '';
+  // SheetJS puede entregar un Date, un número serial, o un string
+  if (val instanceof Date) return val.toISOString().slice(0, 10);
+  const s = String(val).trim();
+  // "2025-01-01 00:00:00" o "2025-01-01T00:00:00"
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  // Número serial de Excel (días desde 1/1/1900)
+  const n = parseFloat(s);
+  if (!isNaN(n) && n > 1000) {
+    const d = new Date((n - 25569) * 86400 * 1000);
+    return d.toISOString().slice(0, 10);
+  }
+  return s;
+}
+
 function parseExcel(wb, uploadedBy) {
   console.log('\n📋 Hojas:', wb.SheetNames);
-  const result = { obra: '', cliente: '', tc: 0, rubros: [], updatedAt: new Date().toISOString(), updatedBy: uploadedBy || '' };
+  const result = { obra: '', cliente: '', tc: 0, rubros: [], cashflow: [], updatedAt: new Date().toISOString(), updatedBy: uploadedBy || '' };
 
-  for (const sheetName of wb.SheetNames) {
+  // ── 1. PRESUPUESTO ──────────────────────────────────────────
+  const PRES_SHEETS = ['Presupuesto', 'presupuesto', 'PRESUPUESTO'];
+  const presSheetName = PRES_SHEETS.find(n => wb.SheetNames.includes(n)) || wb.SheetNames[0];
+
+  for (const sheetName of [presSheetName, ...wb.SheetNames.filter(n => n !== presSheetName)]) {
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '' });
     console.log(`\n--- "${sheetName}" (${rows.length} filas) ---`);
     rows.slice(0, 45).forEach((r, i) => { if (r.some(c => c !== '')) console.log(`  [${i}]`, r.slice(0,10).map(c => String(c).substring(0,28))); });
@@ -221,48 +244,86 @@ function parseExcel(wb, uploadedBy) {
     let currentRubro = null;
 
     for (const row of rows) {
-      // En este Excel: col A (idx 0) vacía, col B (idx 1) = código/etiqueta, col C (idx 2) = descripción
-      const b    = String(row[1] || '').trim();
-      const bLow = b.toLowerCase();
-      const c    = String(row[2] || '').trim();
+      // Buscar código en col A (idx 0) o col B (idx 1) — soporte para ambos formatos
+      const col0 = String(row[0] || '').trim();
+      const col1 = String(row[1] || '').trim();
+      const col2 = String(row[2] || '').trim();
 
-      // ── Metadatos embebidos en celda B: "Cliente: ...", "Dirección: ...", "TC: ..."
-      if (!result.cliente && bLow.startsWith('cliente:')) {
-        result.cliente = b.slice(b.indexOf(':') + 1).trim();
+      // Columna de metadatos: preferir col B, fallback col A
+      const meta    = col1 || col0;
+      const metaLow = meta.toLowerCase();
+
+      // ── Metadatos: "Cliente: ...", "Dirección: ...", "TC: ..."
+      if (!result.cliente && metaLow.includes('cliente:')) {
+        result.cliente = meta.slice(meta.indexOf(':') + 1).trim();
       }
-      if (!result.obra && (bLow.startsWith('dirección:') || bLow.startsWith('direccion:') || bLow.startsWith('obra:'))) {
-        result.obra = b.slice(b.indexOf(':') + 1).trim();
+      if (!result.obra && (metaLow.includes('dirección:') || metaLow.includes('direccion:') || metaLow.includes('obra:'))) {
+        result.obra = meta.slice(meta.indexOf(':') + 1).trim();
       }
-      if (!result.tc && bLow.startsWith('tc:')) {
-        // Preferir el valor numérico de col F (idx 5) si existe
+      if (!result.tc && metaLow.includes('tc:')) {
         const tcF = parseFloat(String(row[5] || ''));
-        if (!isNaN(tcF) && tcF > 100) result.tc = tcF;
-        else {
-          const m = b.match(/[\d.,]+/);
-          if (m) result.tc = parseNum(m[0]);
-        }
+        if (!isNaN(tcF) && tcF > 100) { result.tc = tcF; }
+        else { const m = meta.match(/[\d.,]+/); if (m) result.tc = parseNum(m[0]); }
       }
 
-      // ── Códigos de rubro: col B puede tener espacios al inicio (" 2-12")
-      const cod = b.replace(/^\s+/, '');
+      // ── Código de rubro: buscar en col A o col B (col B tiene espacios a veces)
+      const codA = col0.replace(/^\s+/, '');
+      const codB = col1.replace(/^\s+/, '');
+      const cod  = /^\d{1,2}-\d{2}$/.test(codA) ? codA : /^\d{1,2}-\d{2}$/.test(codB) ? codB : '';
+      // Descripción está en la columna siguiente al código
+      const desc = cod === codA ? (col1 || col2) : col2;
+      // Total (VALOR TOTAL): si código en col A → idx 7; si en col B → idx 8
+      const totalIdx = cod === codA ? 7 : 8;
+      const pres = parseNum(row[totalIdx]);
+
+      if (!cod) continue;
 
       if (/^\d{1,2}-00$/.test(cod)) {
-        // Rubro principal (x-00): el total está en col I (idx 8)
-        const pres = parseNum(row[8]);
-        currentRubro = { cod, desc: c || b, presupuestado: pres, ejecutado: 0, items: [] };
+        currentRubro = { cod, desc: desc.trim(), presupuestado: pres, ejecutado: 0, items: [] };
         result.rubros.push(currentRubro);
-
-      } else if (/^\d{1,2}-\d{2}$/.test(cod) && currentRubro) {
-        // Sub-ítem (x-01, x-02…): guardar bajo el rubro padre
-        const pres = parseNum(row[8]);
-        currentRubro.items.push({ cod, desc: c, presupuestado: pres, ejecutado: 0 });
+      } else if (currentRubro) {
+        currentRubro.items.push({ cod, desc: desc.trim(), presupuestado: pres, ejecutado: 0 });
       }
     }
 
-    if (result.rubros.length > 0) { console.log(`✅ ${result.rubros.length} rubros en "${sheetName}" (${result.rubros.reduce((s,r)=>s+r.items.length,0)} sub-ítems)`); break; }
+    if (result.rubros.length > 0) {
+      console.log(`✅ ${result.rubros.length} rubros en "${sheetName}" (${result.rubros.reduce((s,r)=>s+r.items.length,0)} sub-ítems)`);
+      break;
+    }
   }
 
-  console.log('📦 Parse:', { obra: result.obra, cliente: result.cliente, tc: result.tc, rubros: result.rubros.length });
+  // ── 2. CASHFLOW ─────────────────────────────────────────────
+  const CF_SHEETS = ['Cashflow', 'cashflow', 'CASHFLOW', 'Cash Flow'];
+  const cfSheetName = CF_SHEETS.find(n => wb.SheetNames.includes(n));
+
+  if (cfSheetName) {
+    const cfRows = XLSX.utils.sheet_to_json(wb.Sheets[cfSheetName], { header: 1, defval: '' });
+    // Buscar fila de encabezado (contiene "Fecha" o "fecha")
+    let headerIdx = cfRows.findIndex(r => String(r[0] || r[1] || '').toLowerCase().includes('fecha'));
+    if (headerIdx < 0) headerIdx = 5; // fallback posición conocida
+
+    for (let i = headerIdx + 1; i < cfRows.length; i++) {
+      const r     = cfRows[i];
+      const fecha = parseFecha(r[0]);
+      const tipo  = String(r[2] || '').trim();
+      const monto = parseNum(r[6]);
+      if (!fecha || !tipo || !monto) continue;
+
+      result.cashflow.push({
+        fecha,
+        obra:      String(r[1] || '').trim(),
+        tipo:      tipo === 'Egreso' ? 'Gasto' : tipo,  // normalizar Egreso → Gasto
+        rubro:     String(r[3] || '').trim(),
+        desc:      String(r[4] || '').trim(),
+        proveedor: String(r[5] || '').trim(),
+        monto,
+        estado:    String(r[7] || 'Pendiente').trim()
+      });
+    }
+    console.log(`✅ ${result.cashflow.length} movimientos cashflow en "${cfSheetName}"`);
+  }
+
+  console.log('📦 Parse:', { obra: result.obra, cliente: result.cliente, tc: result.tc, rubros: result.rubros.length, cashflow: result.cashflow.length });
   return result;
 }
 
