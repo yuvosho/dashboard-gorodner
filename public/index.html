@@ -683,10 +683,11 @@ document.getElementById('excel-upload').addEventListener('change', async functio
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al subir');
 
-    const obraSubida = data.data?.obras?.[data.data.obras.length - 1];
-    showToast('✅ ' + (obraSubida?.nombre || 'Obra') + ' — ' + (obraSubida?.rubros?.length || 0) + ' rubros cargados', 'success');
     applyData(data.data);
     renderAll();
+    const totalObras = data.data?.obras?.length || 0;
+    const obraSubida = data.data?.obras?.find(o => o.rubros?.length > 0) || data.data?.obras?.[totalObras - 1];
+    showToast(`✅ "${obraSubida?.nombre || 'Obra'}" — ${obraSubida?.rubros?.length || 0} rubros · ${totalObras} obra${totalObras !== 1 ? 's' : ''} en total`, 'success');
   } catch (err) {
     if (err.message.includes('expirada')) { doLogout(); return; }
     showToast('❌ ' + err.message, 'error');

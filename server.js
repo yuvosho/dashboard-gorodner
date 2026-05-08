@@ -111,8 +111,12 @@ app.post('/api/upload', auth, upload.single('excel'), (req, res) => {
     const parsed = parseExcel(wb, req.user.username);
     const data   = readData();
 
-    const obraName = (parsed.obra || '').trim() || 'Obra sin nombre';
-    const idx = data.obras.findIndex(o => o.nombre.toLowerCase().trim() === obraName.toLowerCase());
+    // Fallback: si el parser no detectó nombre, usar el nombre del archivo sin extensión
+    const fileBasename = req.file.originalname.replace(/\.xlsx?$/i, '').replace(/[_-]+/g, ' ').trim();
+    const obraName = (parsed.obra || '').trim() || fileBasename || 'Obra sin nombre';
+    // Comparación normalizando unicode y espacios para evitar duplicados por tildes/encoding
+    const normalize = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+    const idx = data.obras.findIndex(o => normalize(o.nombre) === normalize(obraName));
 
     const obraData = {
       id:        idx >= 0 ? data.obras[idx].id : genId(),
@@ -254,10 +258,16 @@ function parseExcel(wb, uploadedBy) {
       const metaLow = meta.toLowerCase();
 
       // ── Metadatos: "Cliente: ...", "Dirección: ...", "TC: ..."
-      if (!result.cliente && metaLow.includes('cliente:')) {
+      // Normalizar para comparar sin importar tildes ni mayúsculas
+      const metaNorm = meta.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      if (!result.cliente && metaNorm.includes('cliente:')) {
         result.cliente = meta.slice(meta.indexOf(':') + 1).trim();
       }
-      if (!result.obra && (metaLow.includes('dirección:') || metaLow.includes('direccion:') || metaLow.includes('obra:'))) {
+      if (!result.obra && (metaNorm.includes('direcci') || metaNorm.includes('obra:'))) {
+        result.obra = meta.slice(meta.indexOf(':') + 1).trim();
+      }
+      // Fallback: usar "Referencia:" si no hay dirección/obra
+      if (!result.obra && metaNorm.includes('referencia:')) {
         result.obra = meta.slice(meta.indexOf(':') + 1).trim();
       }
       if (!result.tc && metaLow.includes('tc:')) {
