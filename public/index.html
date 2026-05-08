@@ -675,7 +675,8 @@ document.getElementById('excel-upload').addEventListener('change', async functio
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al subir');
 
-    showToast('✅ Excel cargado — ' + (data.data.rubros?.length || 0) + ' rubros encontrados', 'success');
+    const obraSubida = data.data?.obras?.[data.data.obras.length - 1];
+    showToast('✅ ' + (obraSubida?.nombre || 'Obra') + ' — ' + (obraSubida?.rubros?.length || 0) + ' rubros cargados', 'success');
     applyData(data.data);
     renderAll();
   } catch (err) {
@@ -700,10 +701,10 @@ async function loadData() {
     if (res.status === 401) { doLogout(); return; }
     const data = await res.json();
 
-    if (data && data.rubros && data.rubros.length > 0) {
+    if (data && data.obras && data.obras.length > 0) {
       applyData(data);
     }
-    // Si data es null → usa los datos demo que ya están en DATOS/PRES/CF
+    // Si data es null o no hay obras → dashboard vacío
     renderAll();
   } catch (err) {
     console.error('Error cargando datos:', err);
