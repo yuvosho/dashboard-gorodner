@@ -1012,7 +1012,7 @@ function renderPresupuesto() {
     $('pres-root').innerHTML = emptyState('Usá el botón <strong>Subir Excel</strong> para cargar el presupuesto de la obra.');
     return;
   }
-  const rubros    = PRES.rubros;
+  const rubros    = [...PRES.rubros].sort((a, b) => parseFloat(a.cod) - parseFloat(b.cod));
   const totalPres = rubros.reduce((s, r) => s + r.presupuestado, 0);
   const totalEjec = rubros.reduce((s, r) => s + r.ejecutado,     0);
   const totalRest = totalPres - totalEjec;
