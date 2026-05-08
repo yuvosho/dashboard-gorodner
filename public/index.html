@@ -551,28 +551,7 @@
 
     <!-- ======= TAB: PROVEEDORES ======= -->
     <div id="tab-proveedores" class="tab-section">
-      <div class="demo-banner">
-        ⚠️ Vista previa del diseño — los datos reales se cargarán desde Excel
-      </div>
-      <div class="panel">
-        <div class="tab-header">
-          <div class="panel-title">Proveedores</div>
-          <div class="obra-selector">
-            <span>Obra:</span>
-            <select id="sel-proveedores"><option value="">— Seleccionar obra —</option></select>
-          </div>
-        </div>
-        <table>
-          <thead>
-            <tr><th>Proveedor</th><th>Rubro</th><th>Contacto</th><th>Contratado</th><th>Pagado</th><th>Pendiente</th><th>Estado</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>Constructora Gómez</strong></td><td>Estructura</td><td style="color:var(--text-muted)">11-4567-8901</td><td class="amount">$ 4.200.000</td><td class="amount">$ 2.800.000</td><td class="amount">$ 1.400.000</td><td><span class="badge aldia">Al día</span></td></tr>
-            <tr><td><strong>ElectroPro S.A.</strong></td><td>Instalaciones eléctricas</td><td style="color:var(--text-muted)">11-2345-6789</td><td class="amount">$ 1.800.000</td><td class="amount">$ 980.000</td><td class="amount">$ 820.000</td><td><span class="badge aldia">Al día</span></td></tr>
-            <tr><td><strong>Maderas del Sur</strong></td><td>Carpintería</td><td style="color:var(--text-muted)">11-5678-9012</td><td class="amount">$ 2.800.000</td><td class="amount muted">$ 0</td><td class="amount">$ 2.800.000</td><td><span class="badge pendiente">Pendiente</span></td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div id="prov-root"></div>
     </div>
 
     <!-- ======= TAB: REPORTES ======= -->
@@ -1039,11 +1018,11 @@ function poblarSelectores() {
     elCf.innerHTML = '<option value="">— Seleccionar obra —</option>' +
       OBRAS.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
   }
-  // Proveedores — por nombre (visual)
+  // Proveedores — mismo sistema (por ID)
   const elProv = $('sel-proveedores');
   if (elProv) {
     elProv.innerHTML = '<option value="">— Seleccionar obra —</option>' +
-      OBRAS.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+      OBRAS.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
   }
 }
 
@@ -1553,6 +1532,129 @@ async function asociarObras() {
 // ============================================================
 // RENDER TODO
 // ============================================================
+// RENDER PROVEEDORES
+// ============================================================
+function renderProveedores() {
+  const root = $('prov-root');
+
+  const gastos = CF.movimientos.filter(m => m.tipo === 'Gasto' && m.proveedor);
+
+  if (!gastos.length) {
+    root.innerHTML = emptyState('Los proveedores se calculan a partir del Cashflow. Subí un Excel con movimientos de tipo Gasto para verlos.');
+    return;
+  }
+
+  // Construir mapa por proveedor
+  const rubroDesc = {};
+  (PRES.rubros || []).forEach(r => { rubroDesc[r.cod] = r.desc; });
+
+  const provMap = {};
+  gastos.forEach(m => {
+    const key = m.proveedor.trim();
+    if (!provMap[key]) provMap[key] = { nombre: key, rubros: {}, pagado: 0, pendiente: 0 };
+    const p = provMap[key];
+    const rdesc = rubroDesc[m.rubro] || m.desc || m.rubro;
+    p.rubros[m.rubro] = rdesc;
+    const esPagado = m.estado === 'Pagado' || m.estado === 'Cobrado';
+    if (esPagado) p.pagado  += m.monto;
+    else          p.pendiente += m.monto;
+  });
+
+  const proveedores = Object.values(provMap)
+    .map(p => ({
+      nombre:    p.nombre,
+      rubros:    Object.values(p.rubros).map(d => d.length > 28 ? d.slice(0,27)+'…' : d).join(' · '),
+      pagado:    p.pagado,
+      pendiente: p.pendiente,
+      total:     p.pagado + p.pendiente
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  const totalPagado    = proveedores.reduce((s, p) => s + p.pagado,    0);
+  const totalPendiente = proveedores.reduce((s, p) => s + p.pendiente, 0);
+  const totalGeneral   = totalPagado + totalPendiente;
+
+  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
+    DATOS.obras.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
+
+  const bannerHtml = window._lastUser
+    ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
+    : `<div class="data-banner">✅ Datos cargados</div>`;
+
+  const tableRows = proveedores.map(p => {
+    const estado      = p.pendiente > 0 ? 'pendiente' : 'aldia';
+    const estadoLabel = p.pendiente > 0 ? 'Pendiente' : 'Al día';
+    const pct = totalGeneral ? Math.round(p.total / totalGeneral * 100) : 0;
+    return `<tr>
+      <td><strong>${p.nombre}</strong></td>
+      <td style="font-size:11px;color:var(--text-muted);max-width:200px">${p.rubros}</td>
+      <td class="amount">${formatPeso(p.total)}</td>
+      <td class="amount">${p.pagado   ? formatPeso(p.pagado)    : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td class="amount">${p.pendiente? formatPeso(p.pendiente) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td><div class="pct-cell"><div class="pct-bar"><span style="width:${pct}%"></span></div><span class="pct-text">${pct}%</span></div></td>
+      <td><span class="badge ${estado}">${estadoLabel}</span></td>
+    </tr>`;
+  }).join('');
+
+  root.innerHTML = `
+    ${bannerHtml}
+    <div class="kpi-row-4">
+      <div class="kpi">
+        <div class="kpi-icon taupe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Proveedores</span>
+          <span class="kpi-value">${proveedores.length}</span>
+          <span class="kpi-sub">activos en esta obra</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Pagado</span>
+          <span class="kpi-value">${formatPeso(totalPagado)}</span>
+          <span class="kpi-sub">${totalGeneral ? Math.round(totalPagado/totalGeneral*100) : 0}% del total</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon terra">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Pendiente de Pago</span>
+          <span class="kpi-value">${formatPeso(totalPendiente)}</span>
+          <span class="kpi-sub">${proveedores.filter(p=>p.pendiente>0).length} proveedor${proveedores.filter(p=>p.pendiente>0).length!==1?'es':''} con saldo</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Contratado</span>
+          <span class="kpi-value">${formatPeso(totalGeneral)}</span>
+          <span class="kpi-sub">entre ${proveedores.length} proveedor${proveedores.length!==1?'es':''}</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="tab-header">
+        <div class="panel-title">Detalle por Proveedor</div>
+        <div class="obra-selector"><span>Obra:</span><select id="sel-proveedores">${obraOpts}</select></div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Proveedor</th><th>Rubros</th><th>Total</th><th>Pagado</th><th>Pendiente</th><th>% del total</th><th>Estado</th></tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ============================================================
 function renderAll() {
   renderKpiTop();
   renderTabla('tbody-dashboard');
@@ -1561,6 +1663,7 @@ function renderAll() {
   renderKpiBottom();
   renderPresupuesto();
   renderCashflow();
+  renderProveedores();
   renderDatos();
   poblarSelectores();
 }
@@ -1569,7 +1672,7 @@ function renderAll() {
 // SELECTOR DE OBRA EN PRESUPUESTO — funcional
 // ============================================================
 document.addEventListener('change', function(e) {
-  if (e.target.id === 'sel-presupuesto' || e.target.id === 'sel-cashflow') {
+  if (['sel-presupuesto','sel-cashflow','sel-proveedores'].includes(e.target.id)) {
     const obraId = e.target.value;
     const obra   = OBRAS.find(o => o.id === obraId);
     if (obra) {
@@ -1579,8 +1682,9 @@ document.addEventListener('change', function(e) {
       PRES.cliente   = obra.cliente  || '';
       PRES.rubros    = obra.rubros   || [];
       CF.movimientos = obra.cashflow || [];
-      if (e.target.id === 'sel-presupuesto') renderPresupuesto();
-      else renderCashflow();
+      if      (e.target.id === 'sel-presupuesto') renderPresupuesto();
+      else if (e.target.id === 'sel-cashflow')    renderCashflow();
+      else                                        renderProveedores();
     }
   }
 });
