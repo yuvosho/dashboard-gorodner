@@ -1537,42 +1537,58 @@ async function asociarObras() {
 function renderProveedores() {
   const root = $('prov-root');
 
-  const gastos = CF.movimientos.filter(m => m.tipo === 'Gasto' && m.proveedor);
+  // Fuente primaria: hoja "Proveedores" del Excel (obra.proveedores)
+  const obraActual   = OBRAS.find(o => o.id === PRES_ID);
+  const provExcel    = (obraActual?.proveedores || []).filter(p => p.nombre);
 
-  if (!gastos.length) {
-    root.innerHTML = emptyState('Los proveedores se calculan a partir del Cashflow. Subí un Excel con movimientos de tipo Gasto para verlos.');
+  // Fuente secundaria: cashflow (para calcular pagado/pendiente por proveedor)
+  const gastosCF = CF.movimientos.filter(m => m.tipo === 'Gasto' && m.proveedor);
+  const cfPorProv = {};
+  gastosCF.forEach(m => {
+    const key = m.proveedor.trim().toLowerCase();
+    if (!cfPorProv[key]) cfPorProv[key] = { pagado: 0, pendiente: 0 };
+    const esPagado = m.estado === 'Pagado' || m.estado === 'Cobrado';
+    if (esPagado) cfPorProv[key].pagado    += m.monto;
+    else          cfPorProv[key].pendiente += m.monto;
+  });
+
+  if (!provExcel.length && !gastosCF.length) {
+    root.innerHTML = emptyState('Subí un Excel con la hoja "Proveedores" para ver el detalle.');
     return;
   }
 
-  // Construir mapa por proveedor
-  const rubroDesc = {};
-  (PRES.rubros || []).forEach(r => { rubroDesc[r.cod] = r.desc; });
-
-  const provMap = {};
-  gastos.forEach(m => {
-    const key = m.proveedor.trim();
-    if (!provMap[key]) provMap[key] = { nombre: key, rubros: {}, pagado: 0, pendiente: 0 };
-    const p = provMap[key];
-    const rdesc = rubroDesc[m.rubro] || m.desc || m.rubro;
-    p.rubros[m.rubro] = rdesc;
-    const esPagado = m.estado === 'Pagado' || m.estado === 'Cobrado';
-    if (esPagado) p.pagado  += m.monto;
-    else          p.pendiente += m.monto;
-  });
-
-  const proveedores = Object.values(provMap)
-    .map(p => ({
-      nombre:    p.nombre,
-      rubros:    Object.values(p.rubros).map(d => d.length > 28 ? d.slice(0,27)+'…' : d).join(' · '),
-      pagado:    p.pagado,
-      pendiente: p.pendiente,
-      total:     p.pagado + p.pendiente
-    }))
-    .sort((a, b) => b.total - a.total);
+  // Armar lista final
+  let proveedores;
+  if (provExcel.length) {
+    // Usar datos de la hoja Proveedores, cruzar con cashflow para pagado/pendiente
+    proveedores = provExcel.map(p => {
+      const cf      = cfPorProv[p.nombre.trim().toLowerCase()] || { pagado: 0, pendiente: 0 };
+      const total   = p.gastoEjecutado || (cf.pagado + cf.pendiente);
+      const pagado  = cf.pagado   || (cf.pendiente === 0 ? total : 0);
+      const pendiente = cf.pendiente || 0;
+      // pct del Excel puede ser fracción (0.25) o porcentaje (25)
+      const pctVal  = p.pct > 1 ? p.pct : Math.round(p.pct * 100);
+      return { nombre: p.nombre, total, pagado, pendiente, pct: pctVal };
+    }).sort((a, b) => b.total - a.total);
+  } else {
+    // Fallback: derivar del cashflow
+    const provMap = {};
+    gastosCF.forEach(m => {
+      const key = m.proveedor.trim();
+      if (!provMap[key]) provMap[key] = { nombre: key, pagado: 0, pendiente: 0 };
+      const esPagado = m.estado === 'Pagado' || m.estado === 'Cobrado';
+      if (esPagado) provMap[key].pagado    += m.monto;
+      else          provMap[key].pendiente += m.monto;
+    });
+    proveedores = Object.values(provMap).map(p => ({
+      nombre: p.nombre, total: p.pagado + p.pendiente,
+      pagado: p.pagado, pendiente: p.pendiente, pct: 0
+    })).sort((a, b) => b.total - a.total);
+  }
 
   const totalPagado    = proveedores.reduce((s, p) => s + p.pagado,    0);
   const totalPendiente = proveedores.reduce((s, p) => s + p.pendiente, 0);
-  const totalGeneral   = totalPagado + totalPendiente;
+  const totalGeneral   = proveedores.reduce((s, p) => s + p.total,     0);
 
   const obraOpts = '<option value="">— Seleccionar obra —</option>' +
     DATOS.obras.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
@@ -1584,14 +1600,13 @@ function renderProveedores() {
   const tableRows = proveedores.map(p => {
     const estado      = p.pendiente > 0 ? 'pendiente' : 'aldia';
     const estadoLabel = p.pendiente > 0 ? 'Pendiente' : 'Al día';
-    const pct = totalGeneral ? Math.round(p.total / totalGeneral * 100) : 0;
+    const pct = p.pct || (totalGeneral ? Math.round(p.total / totalGeneral * 100) : 0);
     return `<tr>
       <td><strong>${p.nombre}</strong></td>
-      <td style="font-size:11px;color:var(--text-muted);max-width:200px">${p.rubros}</td>
       <td class="amount">${formatPeso(p.total)}</td>
       <td class="amount">${p.pagado   ? formatPeso(p.pagado)    : '<span style="color:var(--text-muted)">—</span>'}</td>
       <td class="amount">${p.pendiente? formatPeso(p.pendiente) : '<span style="color:var(--text-muted)">—</span>'}</td>
-      <td><div class="pct-cell"><div class="pct-bar"><span style="width:${pct}%"></span></div><span class="pct-text">${pct}%</span></div></td>
+      <td><div class="pct-cell"><div class="pct-bar"><span style="width:${Math.min(pct,100)}%"></span></div><span class="pct-text">${pct}%</span></div></td>
       <td><span class="badge ${estado}">${estadoLabel}</span></td>
     </tr>`;
   }).join('');
@@ -1647,7 +1662,7 @@ function renderProveedores() {
       </div>
       <table>
         <thead>
-          <tr><th>Proveedor</th><th>Rubros</th><th>Total</th><th>Pagado</th><th>Pendiente</th><th>% del total</th><th>Estado</th></tr>
+          <tr><th>Proveedor</th><th>Gasto ejecutado</th><th>Pagado</th><th>Pendiente</th><th>% del total</th><th>Estado</th></tr>
         </thead>
         <tbody>${tableRows}</tbody>
       </table>

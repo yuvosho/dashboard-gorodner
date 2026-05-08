@@ -123,9 +123,10 @@ app.post('/api/upload', auth, upload.single('excel'), (req, res) => {
       nombre:    obraName,
       cliente:   parsed.cliente || '',
       tc:        parsed.tc || 0,
-      rubros:    parsed.rubros,
-      cashflow:  parsed.cashflow,
-      updatedAt: parsed.updatedAt,
+      rubros:      parsed.rubros,
+      cashflow:    parsed.cashflow,
+      proveedores: parsed.proveedores,
+      updatedAt:   parsed.updatedAt,
       updatedBy: parsed.updatedBy
     };
 
@@ -234,7 +235,7 @@ function parseFecha(val) {
 
 function parseExcel(wb, uploadedBy) {
   console.log('\n📋 Hojas:', wb.SheetNames);
-  const result = { obra: '', cliente: '', tc: 0, rubros: [], cashflow: [], updatedAt: new Date().toISOString(), updatedBy: uploadedBy || '' };
+  const result = { obra: '', cliente: '', tc: 0, rubros: [], cashflow: [], proveedores: [], updatedAt: new Date().toISOString(), updatedBy: uploadedBy || '' };
 
   // ── 1. PRESUPUESTO ──────────────────────────────────────────
   const PRES_SHEETS = ['Presupuesto', 'presupuesto', 'PRESUPUESTO'];
@@ -333,7 +334,30 @@ function parseExcel(wb, uploadedBy) {
     console.log(`✅ ${result.cashflow.length} movimientos cashflow en "${cfSheetName}"`);
   }
 
-  console.log('📦 Parse:', { obra: result.obra, cliente: result.cliente, tc: result.tc, rubros: result.rubros.length, cashflow: result.cashflow.length });
+  // ── 3. PROVEEDORES ──────────────────────────────────────────
+  const PROV_SHEETS = ['Proveedores', 'proveedores', 'PROVEEDORES'];
+  const provSheetName = PROV_SHEETS.find(n => wb.SheetNames.includes(n));
+
+  if (provSheetName) {
+    const provRows = XLSX.utils.sheet_to_json(wb.Sheets[provSheetName], { header: 1, defval: '' });
+    // Buscar fila de encabezado (contiene "Proveedor")
+    let provHeaderIdx = provRows.findIndex(r =>
+      r.some(c => String(c).toLowerCase().includes('proveedor'))
+    );
+    if (provHeaderIdx < 0) provHeaderIdx = 4; // fallback: fila 5 (idx 4)
+
+    for (let i = provHeaderIdx + 1; i < provRows.length; i++) {
+      const r      = provRows[i];
+      const nombre = String(r[0] || '').trim();
+      if (!nombre) continue;  // saltar filas vacías
+      const gastoEjecutado = parseNum(r[1]);
+      const pct            = parseNum(r[2]);  // puede ser 0.25 (25%) o 25
+      result.proveedores.push({ nombre, gastoEjecutado, pct });
+    }
+    console.log(`✅ ${result.proveedores.length} proveedores en "${provSheetName}"`);
+  }
+
+  console.log('📦 Parse:', { obra: result.obra, cliente: result.cliente, tc: result.tc, rubros: result.rubros.length, cashflow: result.cashflow.length, proveedores: result.proveedores.length });
   return result;
 }
 
