@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>brzn arquitectura — Control de Obras</title>
 <style>
   :root {
@@ -360,17 +360,133 @@
   .datos-nombre { display: inline-block; }
   .hidden { display: none !important; }
 
-  /* RESPONSIVE */
+  /* RESPONSIVE — TABLET */
   @media (max-width: 1100px) {
     .kpi-row   { flex-wrap: wrap; }
     .kpi-row-4 { flex-wrap: wrap; }
     .middle      { grid-template-columns: 1fr; }
     .middle-wide { grid-template-columns: 1fr; }
   }
+
+  /* RESPONSIVE — MOBILE */
   @media (max-width: 780px) {
-    .layout { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .main { padding: 16px; }
+    /* Layout base */
+    .layout {
+      grid-template-columns: 1fr;
+      padding-bottom: 70px; /* espacio para la barra inferior */
+    }
+
+    /* ── SIDEBAR → BARRA INFERIOR ── */
+    .sidebar {
+      display: flex !important;
+      flex-direction: row;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: auto;
+      width: 100%;
+      padding: 6px 4px env(safe-area-inset-bottom, 6px);
+      gap: 0;
+      z-index: 200;
+      border-top: 1px solid var(--border);
+      border-right: none;
+      box-shadow: 0 -2px 16px rgba(60,50,40,0.12);
+      overflow-x: auto;
+      overflow-y: hidden;
+      top: auto;
+      height: auto;
+      justify-content: space-around;
+    }
+    .sidebar-logo,
+    .sidebar-footer,
+    .nav-group-label { display: none !important; }
+
+    .nav-item {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 6px 4px 4px;
+      font-size: 9.5px;
+      min-width: 48px;
+      flex: 1;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+    .nav-item svg { width: 19px; height: 19px; }
+
+    /* ── TOPBAR ── */
+    .main { padding: 12px 14px 16px; }
+    .topbar { flex-wrap: nowrap; gap: 8px; padding-bottom: 12px; }
+    .page-title { font-size: 15px; }
+    .topbar-user { display: none; }
+    /* Botón subir: solo icono */
+    .upload-label {
+      padding: 8px 10px;
+      gap: 0;
+      font-size: 0; /* ocultar texto */
+    }
+    .upload-label svg { width: 16px; height: 16px; margin: 0; }
+    .logout-btn { padding: 8px 10px; font-size: 12px; }
+
+    /* ── KPIs ── */
+    .kpi-row > .kpi,
+    .kpi-row-4 > .kpi { flex: 1 1 calc(50% - 10px); min-width: calc(50% - 10px); max-width: calc(50% - 10px); }
+    .kpi { padding: 12px 12px; gap: 9px; }
+    .kpi-icon { width: 34px; height: 34px; flex-shrink: 0; }
+    .kpi-icon svg { width: 15px; height: 15px; }
+    .kpi-value { font-size: 13px; }
+
+    /* ── TABLAS: scroll horizontal ── */
+    .panel { padding: 12px; }
+    .panel > table,
+    .panel > * > table { /* tablas directo o en un sub-wrapper */
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+    }
+    /* Dentro de pres-root, cf-root, etc. */
+    #pres-root .panel,
+    #cf-root .panel,
+    #prov-root .panel,
+    #datos-root .panel {
+      overflow-x: auto;
+    }
+    #pres-root table,
+    #cf-root table,
+    #prov-root table,
+    #datos-root table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+    }
+
+    /* ── TAB HEADER con selector ── */
+    .tab-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .obra-selector { width: 100%; }
+    .obra-selector select { min-width: 0; width: 100%; }
+
+    /* ── PCT bar compacta ── */
+    .pct-cell { min-width: 72px; }
+    .pct-bar  { max-width: 36px; }
+
+    /* ── Toast: centrado abajo, arriba de la barra ── */
+    .toast { bottom: 82px; right: 12px; left: 12px; text-align: center; }
+
+    /* ── Login ── */
+    .login-box { width: 90%; padding: 32px 24px 28px; }
+
+    /* ── Datos tab: inputs full width ── */
+    .datos-select { min-width: 0; width: 100%; }
+  }
+
+  /* iPhones con notch/Dynamic Island */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    @media (max-width: 780px) {
+      .layout { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+      .sidebar { padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+    }
   }
 </style>
 </head>
