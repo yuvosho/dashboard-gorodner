@@ -1116,7 +1116,7 @@ function renderPresupuesto() {
   }).join('');
 
   const obraOpts = '<option value="">— Seleccionar obra —</option>' +
-    DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+    DATOS.obras.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
 
   const bannerHtml = window._lastUser
     ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
@@ -1288,7 +1288,7 @@ function renderCashflow() {
   }).join('');
 
   const obraOpts = '<option value="">— Seleccionar obra —</option>' +
-    DATOS.obras.map(o => `<option value="${o.nombre}">${o.nombre}</option>`).join('');
+    DATOS.obras.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
 
   const bannerHtml = window._lastUser
     ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
