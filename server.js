@@ -193,32 +193,76 @@ app.post('/api/obras/merge', auth, (req, res) => {
 // ============================================================
 // PARSER EXCEL
 // ============================================================
+
+// Parsea un valor numérico tolerando tanto formato anglosajón (7412492.354)
+// como formato argentino (1.234.567,89) sin romper los decimales.
+function parseNum(val) {
+  if (val === null || val === undefined) return 0;
+  const s = String(val).trim();
+  if (!s || s === 'Bonificado' || s.startsWith('#')) return 0;
+  // Si ya es un número JS válido (SheetJS lo suele entregar así)
+  const direct = parseFloat(s);
+  if (!isNaN(direct) && !s.includes(',')) return Math.round(direct * 100) / 100;
+  // Formato argentino: "1.234.567,89" → quitar puntos, coma → punto
+  const cleaned = s.replace(/[$\s]/g, '').replace(/\./g, '').replace(',', '.');
+  const result  = parseFloat(cleaned);
+  return isNaN(result) ? 0 : Math.round(result * 100) / 100;
+}
+
 function parseExcel(wb, uploadedBy) {
   console.log('\n📋 Hojas:', wb.SheetNames);
-  const RUBRO_CODES = ['1-00','2-00','3-00','4-00','5-00','6-00','7-00','8-00','9-00','10-00','11-00','12-00','13-00','14-00','15-00'];
   const result = { obra: '', cliente: '', tc: 0, rubros: [], updatedAt: new Date().toISOString(), updatedBy: uploadedBy || '' };
 
   for (const sheetName of wb.SheetNames) {
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '' });
     console.log(`\n--- "${sheetName}" (${rows.length} filas) ---`);
-    rows.slice(0, 40).forEach((r, i) => { if (r.some(c => c !== '')) console.log(`  [${i}]`, r.slice(0,10).map(c => String(c).substring(0,25))); });
+    rows.slice(0, 45).forEach((r, i) => { if (r.some(c => c !== '')) console.log(`  [${i}]`, r.slice(0,10).map(c => String(c).substring(0,28))); });
+
+    let currentRubro = null;
 
     for (const row of rows) {
-      const label0 = String(row[0]||'').toLowerCase();
-      if (!result.obra    && label0.includes('obra'))    { const v = row.find((c,i) => i>0 && String(c).trim().length>3 && typeof c==='string'); if (v) result.obra    = String(v).trim(); }
-      if (!result.cliente && label0.includes('cliente')) { const v = row.find((c,i) => i>0 && String(c).trim().length>3 && typeof c==='string'); if (v) result.cliente = String(v).trim(); }
-      if (!result.tc      && label0.includes('tc'))      { const v = row.find((c,i) => i>0 && !isNaN(parseFloat(c)) && parseFloat(c)>100); if (v) result.tc = parseFloat(v); }
+      // En este Excel: col A (idx 0) vacía, col B (idx 1) = código/etiqueta, col C (idx 2) = descripción
+      const b    = String(row[1] || '').trim();
+      const bLow = b.toLowerCase();
+      const c    = String(row[2] || '').trim();
 
-      const firstCell = String(row[0]||'').trim();
-      if (RUBRO_CODES.includes(firstCell)) {
-        const nums = row.slice(1).map(c => parseFloat(String(c).replace(/[$ .']/g,'').replace(',','.'))).filter(n => !isNaN(n) && n > 0);
-        const desc = row.find((c,i) => i>0 && typeof c==='string' && c.trim().length>3) || '';
-        result.rubros.push({ cod: firstCell, desc: String(desc).trim(), presupuestado: nums[0]||0, ejecutado: nums[1]||0 });
+      // ── Metadatos embebidos en celda B: "Cliente: ...", "Dirección: ...", "TC: ..."
+      if (!result.cliente && bLow.startsWith('cliente:')) {
+        result.cliente = b.slice(b.indexOf(':') + 1).trim();
+      }
+      if (!result.obra && (bLow.startsWith('dirección:') || bLow.startsWith('direccion:') || bLow.startsWith('obra:'))) {
+        result.obra = b.slice(b.indexOf(':') + 1).trim();
+      }
+      if (!result.tc && bLow.startsWith('tc:')) {
+        // Preferir el valor numérico de col F (idx 5) si existe
+        const tcF = parseFloat(String(row[5] || ''));
+        if (!isNaN(tcF) && tcF > 100) result.tc = tcF;
+        else {
+          const m = b.match(/[\d.,]+/);
+          if (m) result.tc = parseNum(m[0]);
+        }
+      }
+
+      // ── Códigos de rubro: col B puede tener espacios al inicio (" 2-12")
+      const cod = b.replace(/^\s+/, '');
+
+      if (/^\d{1,2}-00$/.test(cod)) {
+        // Rubro principal (x-00): el total está en col I (idx 8)
+        const pres = parseNum(row[8]);
+        currentRubro = { cod, desc: c || b, presupuestado: pres, ejecutado: 0, items: [] };
+        result.rubros.push(currentRubro);
+
+      } else if (/^\d{1,2}-\d{2}$/.test(cod) && currentRubro) {
+        // Sub-ítem (x-01, x-02…): guardar bajo el rubro padre
+        const pres = parseNum(row[8]);
+        currentRubro.items.push({ cod, desc: c, presupuestado: pres, ejecutado: 0 });
       }
     }
-    if (result.rubros.length > 0) { console.log(`✅ ${result.rubros.length} rubros en "${sheetName}"`); break; }
+
+    if (result.rubros.length > 0) { console.log(`✅ ${result.rubros.length} rubros en "${sheetName}" (${result.rubros.reduce((s,r)=>s+r.items.length,0)} sub-ítems)`); break; }
   }
-  console.log('📦 Parse:', { obra: result.obra, cliente: result.cliente, rubros: result.rubros.length });
+
+  console.log('📦 Parse:', { obra: result.obra, cliente: result.cliente, tc: result.tc, rubros: result.rubros.length });
   return result;
 }
 

@@ -311,6 +311,14 @@
   .rubro-header-row td:first-child { color: var(--terra); font-size: 10.5px; }
   tbody tr.rubro-header-row:last-child td { border-bottom: 1px solid var(--border); }
 
+  /* Sub-ítems de rubro */
+  tr.rubro-main td:first-child { cursor: pointer; user-select: none; }
+  tr.rubro-main td:first-child .expand-icon { display: inline-block; width: 14px; text-align: center; font-size: 9px; color: var(--text-muted); margin-right: 3px; transition: transform 0.15s; }
+  tr.rubro-main.open td:first-child .expand-icon { transform: rotate(90deg); }
+  tr.rubro-sub td { background: #FAFAF8; font-size: 11.5px; }
+  tr.rubro-sub td:first-child { padding-left: 22px; color: var(--text-muted); font-size: 10.5px; }
+  tr.rubro-sub td:nth-child(2) { color: var(--text-muted); }
+
   /* BADGES CASHFLOW */
   .badge.cobrado  { background: var(--green-soft);   color: var(--green-dark); }
   .badge.cobrado::before  { background: var(--green); }
@@ -1037,16 +1045,19 @@ function renderPresupuesto() {
   }).join('');
 
   const tableRows = rubros.map(r => {
-    const pct     = r.presupuestado ? Math.round(r.ejecutado / r.presupuestado * 100) : 0;
+    const pct      = r.presupuestado ? Math.round(r.ejecutado / r.presupuestado * 100) : 0;
     const restante = r.presupuestado - r.ejecutado;
+    const items    = r.items || [];
     let estado, estadoLabel;
     if (pct >= 100)     { estado = 'aldia';     estadoLabel = 'Completado'; }
     else if (pct >= 50) { estado = 'curso';     estadoLabel = 'En curso';   }
     else if (pct > 0)   { estado = 'atencion';  estadoLabel = 'Iniciado';   }
     else                { estado = 'pendiente'; estadoLabel = 'Pendiente';  }
-    const barCls = pct >= 100 ? 'terra' : pct > 0 && pct < 50 ? 'mustard' : '';
-    return `<tr>
-      <td style="color:var(--terra);font-size:11px;font-weight:700;white-space:nowrap">${r.cod}</td>
+    const barCls     = pct >= 100 ? 'terra' : pct > 0 && pct < 50 ? 'mustard' : '';
+    const hasItems   = items.length > 0;
+    const expandIcon = hasItems ? `<span class="expand-icon">▶</span>` : `<span class="expand-icon" style="opacity:0">▶</span>`;
+    const mainRow    = `<tr class="rubro-main${hasItems ? '' : ''}" id="rubro-${r.cod}" onclick="${hasItems ? `toggleRubro('${r.cod}')` : ''}">
+      <td style="color:var(--terra);font-size:11px;font-weight:700;white-space:nowrap">${expandIcon}${r.cod}</td>
       <td>${r.desc}</td>
       <td class="amount">${formatPeso(r.presupuestado)}</td>
       <td class="amount">${r.ejecutado ? formatPeso(r.ejecutado) : '<span style="color:var(--text-muted)">—</span>'}</td>
@@ -1054,6 +1065,19 @@ function renderPresupuesto() {
       <td class="amount">${formatPeso(restante)}</td>
       <td><span class="badge ${estado}">${estadoLabel}</span></td>
     </tr>`;
+    const subRows = items.map(item => {
+      const iPct  = item.presupuestado ? Math.round((item.ejecutado||0) / item.presupuestado * 100) : 0;
+      return `<tr class="rubro-sub" data-parent="${r.cod}" style="display:none">
+        <td style="white-space:nowrap">${item.cod}</td>
+        <td>${item.desc}</td>
+        <td class="amount">${item.presupuestado ? formatPeso(item.presupuestado) : '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td class="amount">${item.ejecutado ? formatPeso(item.ejecutado) : '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td><div class="pct-cell"><div class="pct-bar"><span style="width:${iPct}%"></span></div><span class="pct-text">${iPct}%</span></div></td>
+        <td class="amount">${formatPeso(item.presupuestado - (item.ejecutado||0))}</td>
+        <td></td>
+      </tr>`;
+    }).join('');
+    return mainRow + subRows;
   }).join('');
 
   const obraOpts = '<option value="">— Seleccionar obra —</option>' +
@@ -1131,6 +1155,18 @@ function renderPresupuesto() {
 
 // ============================================================
 // RENDER CASHFLOW
+// ============================================================
+// TOGGLE SUB-ÍTEMS DE RUBRO
+// ============================================================
+function toggleRubro(cod) {
+  const mainRow = document.getElementById('rubro-' + cod);
+  const subRows = document.querySelectorAll(`tr[data-parent="${cod}"]`);
+  if (!subRows.length) return;
+  const isOpen = mainRow.classList.contains('open');
+  mainRow.classList.toggle('open', !isOpen);
+  subRows.forEach(r => r.style.display = isOpen ? 'none' : '');
+}
+
 // ============================================================
 function renderCashflow() {
   if (!CF.movimientos.length) {
