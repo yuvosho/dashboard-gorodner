@@ -71,6 +71,63 @@
     text-align: center; min-height: 18px;
   }
 
+  /* ======= MODAL CASHFLOW ======= */
+  .cf-modal-overlay {
+    position: fixed; inset: 0; background: rgba(60,50,40,0.45);
+    z-index: 9990; display: flex; align-items: center; justify-content: center;
+  }
+  .cf-modal-overlay.hidden { display: none; }
+  .cf-modal-box {
+    background: var(--card-bg); border-radius: 14px; width: 440px; max-width: 95vw;
+    box-shadow: 0 8px 40px rgba(60,50,40,0.18); display: flex; flex-direction: column;
+  }
+  .cf-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+  }
+  .cf-modal-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .cf-modal-close {
+    background: none; border: none; font-size: 16px; color: var(--text-muted);
+    cursor: pointer; padding: 2px 8px; border-radius: 5px; transition: background 0.15s;
+  }
+  .cf-modal-close:hover { background: var(--bg); }
+  .cf-modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 13px; }
+  .cf-field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .cf-field label {
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.7px;
+  }
+  .cf-field input, .cf-field select {
+    padding: 9px 11px; border: 1px solid var(--border); border-radius: 7px;
+    font-size: 13px; font-family: inherit; background: var(--bg); color: var(--text);
+    outline: none; transition: border-color 0.15s; width: 100%; box-sizing: border-box;
+  }
+  .cf-field input:focus, .cf-field select:focus { border-color: var(--terra); }
+  .cf-field-row { display: flex; gap: 12px; }
+  .cf-modal-footer {
+    display: flex; gap: 10px; justify-content: flex-end;
+    padding: 16px 24px; border-top: 1px solid var(--border);
+  }
+  .btn-secondary {
+    padding: 9px 18px; border: 1px solid var(--border); border-radius: 7px;
+    font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+    background: var(--bg); color: var(--text); transition: background 0.15s;
+  }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-primary {
+    padding: 9px 18px; border: none; border-radius: 7px;
+    font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+    background: var(--terra); color: #fff; transition: background 0.15s;
+  }
+  .btn-primary:hover { background: #b56a4a; }
+  .btn-primary:disabled { background: var(--taupe); cursor: default; }
+  .cf-del-btn {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    font-size: 13px; padding: 2px 5px; border-radius: 4px; transition: color 0.15s, background 0.15s;
+    line-height: 1;
+  }
+  .cf-del-btn:hover { color: var(--terra); background: var(--terra-soft); }
+
   /* ======= LAYOUT ======= */
   .layout {
     display: grid;
@@ -513,6 +570,64 @@
 
 <!-- ======= TOAST ======= -->
 <div class="toast" id="toast"></div>
+
+<!-- ======= MODAL: NUEVO MOVIMIENTO CASHFLOW ======= -->
+<div class="cf-modal-overlay hidden" id="cf-modal-overlay" onclick="if(event.target===this)closeCfModal()">
+  <div class="cf-modal-box">
+    <div class="cf-modal-header">
+      <span class="cf-modal-title">Nuevo movimiento</span>
+      <button class="cf-modal-close" onclick="closeCfModal()">✕</button>
+    </div>
+    <div class="cf-modal-body">
+      <div class="cf-field-row">
+        <div class="cf-field">
+          <label>Fecha *</label>
+          <input type="date" id="cf-fecha">
+        </div>
+        <div class="cf-field">
+          <label>Tipo *</label>
+          <select id="cf-tipo">
+            <option value="Ingreso">Ingreso</option>
+            <option value="Gasto">Gasto</option>
+          </select>
+        </div>
+      </div>
+      <div class="cf-field-row">
+        <div class="cf-field">
+          <label>Monto (ARS) *</label>
+          <input type="number" id="cf-monto" placeholder="0" min="0" step="any">
+        </div>
+        <div class="cf-field">
+          <label>Estado</label>
+          <select id="cf-estado">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Cobrado">Cobrado</option>
+            <option value="Pagado">Pagado</option>
+          </select>
+        </div>
+      </div>
+      <div class="cf-field">
+        <label>Descripción</label>
+        <input type="text" id="cf-desc" placeholder="Ej: Anticipo certificado 3">
+      </div>
+      <div class="cf-field-row">
+        <div class="cf-field">
+          <label>Rubro</label>
+          <input type="text" id="cf-rubro" placeholder="Ej: 03-00">
+        </div>
+        <div class="cf-field">
+          <label>Proveedor</label>
+          <input type="text" id="cf-proveedor" placeholder="Ej: Contratista">
+        </div>
+      </div>
+      <div id="cf-modal-error" style="color:var(--terra);font-size:12px;min-height:16px;"></div>
+    </div>
+    <div class="cf-modal-footer">
+      <button class="btn-secondary" onclick="closeCfModal()">Cancelar</button>
+      <button class="btn-primary" id="cf-save-btn" onclick="saveCfMovimiento()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <div class="layout">
 
@@ -1300,9 +1415,86 @@ function toggleRubro(cod) {
 }
 
 // ============================================================
+// ============================================================
+// CASHFLOW MANUAL — MODAL
+// ============================================================
+function openCfModal() {
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('cf-fecha').value     = today;
+  document.getElementById('cf-tipo').value      = 'Ingreso';
+  document.getElementById('cf-monto').value     = '';
+  document.getElementById('cf-desc').value      = '';
+  document.getElementById('cf-rubro').value     = '';
+  document.getElementById('cf-proveedor').value = '';
+  document.getElementById('cf-estado').value    = 'Pendiente';
+  document.getElementById('cf-modal-error').textContent = '';
+  document.getElementById('cf-save-btn').disabled = false;
+  document.getElementById('cf-modal-overlay').classList.remove('hidden');
+  document.getElementById('cf-monto').focus();
+}
+
+function closeCfModal() {
+  document.getElementById('cf-modal-overlay').classList.add('hidden');
+}
+
+async function saveCfMovimiento() {
+  const fecha     = document.getElementById('cf-fecha').value.trim();
+  const tipo      = document.getElementById('cf-tipo').value;
+  const monto     = parseFloat(document.getElementById('cf-monto').value);
+  const desc      = document.getElementById('cf-desc').value.trim();
+  const rubro     = document.getElementById('cf-rubro').value.trim();
+  const proveedor = document.getElementById('cf-proveedor').value.trim();
+  const estado    = document.getElementById('cf-estado').value;
+  const errEl     = document.getElementById('cf-modal-error');
+  const saveBtn   = document.getElementById('cf-save-btn');
+
+  if (!fecha)            { errEl.textContent = 'Ingresá una fecha'; return; }
+  if (!monto || monto <= 0) { errEl.textContent = 'Ingresá un monto válido'; return; }
+  if (!PRES_ID)          { errEl.textContent = 'Seleccioná una obra primero'; return; }
+
+  errEl.textContent = '';
+  saveBtn.disabled  = true;
+  saveBtn.textContent = 'Guardando...';
+
+  try {
+    const res  = await fetch(`/api/obras/${PRES_ID}/cashflow`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fecha, tipo, monto, desc, rubro, proveedor, estado })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al guardar');
+    applyData(data.data);
+    closeCfModal();
+    showToast('Movimiento agregado');
+  } catch (err) {
+    errEl.textContent = err.message;
+    saveBtn.disabled  = false;
+    saveBtn.textContent = 'Guardar';
+  }
+}
+
+async function deleteCfMovimiento(movId) {
+  if (!PRES_ID) return;
+  if (!confirm('¿Eliminar este movimiento?')) return;
+  try {
+    const res  = await fetch(`/api/obras/${PRES_ID}/cashflow/${movId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al eliminar');
+    applyData(data.data);
+    showToast('Movimiento eliminado');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
 function renderCashflow() {
   if (!CF.movimientos.length) {
-    $('cf-root').innerHTML = emptyState('Usá el botón <strong>Subir Excel</strong> para cargar los movimientos de caja.');
+    $('cf-root').innerHTML = (PRES_ID ? `<div style="text-align:right;margin-bottom:10px"><button class="btn-primary" onclick="openCfModal()">+ Agregar movimiento</button></div>` : '') +
+      emptyState('Seleccioná una obra y usá <strong>+ Agregar movimiento</strong> o subí un Excel.');
     return;
   }
   const movs = CF.movimientos;
@@ -1371,6 +1563,9 @@ function renderCashflow() {
     const estadoCls = m.estado === 'Cobrado' ? 'cobrado' : m.estado === 'Pagado' ? 'pagado' : 'pendiente-cf';
     const signo     = m.tipo === 'Ingreso' ? '+' : '–';
     const amtColor  = m.tipo === 'Ingreso' ? 'var(--green-dark)' : 'var(--terra)';
+    const delBtn    = m.manual && m.id
+      ? `<button class="cf-del-btn" onclick="deleteCfMovimiento('${m.id}')" title="Eliminar">✕</button>`
+      : '';
     return `<tr>
       <td style="white-space:nowrap;color:var(--text-muted)">${fmtF(m.fecha)}</td>
       <td><span class="${tipoCls}">${m.tipo}</span></td>
@@ -1379,6 +1574,7 @@ function renderCashflow() {
       <td style="color:var(--text-muted)">${m.proveedor}</td>
       <td class="amount" style="color:${amtColor}">${signo}${formatPeso(m.monto)}</td>
       <td><span class="badge ${estadoCls}">${m.estado}</span></td>
+      <td style="width:28px;text-align:center">${delBtn}</td>
     </tr>`;
   }).join('');
 
@@ -1439,11 +1635,14 @@ function renderCashflow() {
       <div class="panel">
         <div class="tab-header">
           <div class="panel-title">Movimientos</div>
-          <div class="obra-selector"><span>Obra:</span><select id="sel-cashflow">${obraOpts}</select></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            ${PRES_ID ? `<button class="btn-primary" onclick="openCfModal()" style="padding:7px 14px;font-size:12px">+ Agregar</button>` : ''}
+            <div class="obra-selector"><span>Obra:</span><select id="sel-cashflow">${obraOpts}</select></div>
+          </div>
         </div>
         <table>
           <thead>
-            <tr><th>Fecha</th><th>Tipo</th><th>Rubro</th><th>Descripción</th><th>Proveedor</th><th>Monto</th><th>Estado</th></tr>
+            <tr><th>Fecha</th><th>Tipo</th><th>Rubro</th><th>Descripción</th><th>Proveedor</th><th>Monto</th><th>Estado</th><th></th></tr>
           </thead>
           <tbody>${movRows}</tbody>
         </table>

@@ -169,6 +169,54 @@ app.delete('/api/obras/:id', auth, (req, res) => {
   res.json({ ok: true });
 });
 
+// Agregar movimiento manual de cashflow
+app.post('/api/obras/:id/cashflow', auth, (req, res) => {
+  const data = readData();
+  const idx  = data.obras.findIndex(o => o.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Obra no encontrada' });
+
+  const { fecha, tipo, rubro, desc, proveedor, monto, estado } = req.body;
+  if (!fecha || !tipo || !monto) return res.status(400).json({ error: 'Faltan datos obligatorios' });
+  if (!['Ingreso','Gasto'].includes(tipo)) return res.status(400).json({ error: 'Tipo inválido' });
+
+  const mov = {
+    id:        genId(),
+    fecha,
+    obra:      data.obras[idx].nombre,
+    tipo,
+    rubro:     rubro     || '',
+    desc:      desc      || '',
+    proveedor: proveedor || '',
+    monto:     parseFloat(monto),
+    estado:    estado    || 'Pendiente',
+    manual:    true
+  };
+
+  if (!data.obras[idx].cashflow) data.obras[idx].cashflow = [];
+  data.obras[idx].cashflow.push(mov);
+  data.obras[idx].updatedAt = new Date().toISOString();
+  data.obras[idx].updatedBy = req.user.username;
+
+  writeData(data);
+  console.log(`💰 Movimiento manual por ${req.user.username}: ${tipo} $${monto} — "${data.obras[idx].nombre}"`);
+  res.json({ ok: true, mov, data });
+});
+
+// Eliminar movimiento manual de cashflow
+app.delete('/api/obras/:id/cashflow/:movId', auth, (req, res) => {
+  const data = readData();
+  const idx  = data.obras.findIndex(o => o.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Obra no encontrada' });
+
+  const cf     = data.obras[idx].cashflow || [];
+  const before = cf.length;
+  data.obras[idx].cashflow = cf.filter(m => m.id !== req.params.movId);
+  if (data.obras[idx].cashflow.length === before) return res.status(404).json({ error: 'Movimiento no encontrado' });
+
+  writeData(data);
+  res.json({ ok: true, data });
+});
+
 // Asociar/fusionar dos obras (los rubros de deleteId se unen a keepId)
 app.post('/api/obras/merge', auth, (req, res) => {
   const { keepId, deleteId } = req.body;
