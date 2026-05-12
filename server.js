@@ -240,6 +240,70 @@ app.delete('/api/obras/:id/cashflow/:idx', auth, (req, res) => {
   res.json({ ok: true, data });
 });
 
+// Agregar proveedor manual
+app.post('/api/obras/:id/proveedores', auth, (req, res) => {
+  const data = readData();
+  const idx  = data.obras.findIndex(o => o.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Obra no encontrada' });
+
+  const { nombre, totalContratado, pagado } = req.body;
+  if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+
+  const prov = {
+    id:              genId(),
+    nombre,
+    totalContratado: parseFloat(totalContratado) || 0,
+    pagado:          parseFloat(pagado)          || 0,
+    manual:          true
+  };
+
+  if (!data.obras[idx].proveedores) data.obras[idx].proveedores = [];
+  data.obras[idx].proveedores.push(prov);
+  data.obras[idx].updatedAt = new Date().toISOString();
+  data.obras[idx].updatedBy = req.user.username;
+
+  writeData(data);
+  console.log(`🏗️  Proveedor manual por ${req.user.username}: "${nombre}" — "${data.obras[idx].nombre}"`);
+  res.json({ ok: true, prov, data });
+});
+
+// Editar proveedor por indice
+app.put('/api/obras/:id/proveedores/:idx', auth, (req, res) => {
+  const data    = readData();
+  const obraIdx = data.obras.findIndex(o => o.id === req.params.id);
+  if (obraIdx < 0) return res.status(404).json({ error: 'Obra no encontrada' });
+
+  const provs   = data.obras[obraIdx].proveedores || [];
+  const provIdx = parseInt(req.params.idx, 10);
+  if (isNaN(provIdx) || provIdx < 0 || provIdx >= provs.length) return res.status(404).json({ error: 'Proveedor no encontrado' });
+
+  const { nombre, totalContratado, pagado } = req.body;
+  if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+
+  Object.assign(provs[provIdx], { nombre, totalContratado: parseFloat(totalContratado) || 0, pagado: parseFloat(pagado) || 0 });
+  data.obras[obraIdx].updatedAt = new Date().toISOString();
+  data.obras[obraIdx].updatedBy = req.user.username;
+
+  writeData(data);
+  res.json({ ok: true, data });
+});
+
+// Eliminar proveedor por indice
+app.delete('/api/obras/:id/proveedores/:idx', auth, (req, res) => {
+  const data    = readData();
+  const obraIdx = data.obras.findIndex(o => o.id === req.params.id);
+  if (obraIdx < 0) return res.status(404).json({ error: 'Obra no encontrada' });
+
+  const provs   = data.obras[obraIdx].proveedores || [];
+  const provIdx = parseInt(req.params.idx, 10);
+  if (isNaN(provIdx) || provIdx < 0 || provIdx >= provs.length) return res.status(404).json({ error: 'Proveedor no encontrado' });
+
+  provs.splice(provIdx, 1);
+  data.obras[obraIdx].proveedores = provs;
+  writeData(data);
+  res.json({ ok: true, data });
+});
+
 // Asociar/fusionar dos obras (los rubros de deleteId se unen a keepId)
 app.post('/api/obras/merge', auth, (req, res) => {
   const { keepId, deleteId } = req.body;

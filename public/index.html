@@ -604,15 +604,15 @@
 <!-- ======= TOOLTIP CASHFLOW ======= -->
 <div id="cf-tooltip" style="display:none;position:fixed;background:var(--card-bg);border:1px solid var(--border);border-radius:9px;padding:10px 14px;font-size:12px;line-height:1.7;pointer-events:none;z-index:5000;box-shadow:0 3px 14px rgba(60,50,40,0.13)"></div>
 
-<!-- ======= CONFIRM: ELIMINAR MOVIMIENTO ======= -->
-<div class="cf-confirm-overlay hidden" id="cf-confirm-overlay" onclick="if(event.target===this)closeCfConfirm()">
+<!-- ======= CONFIRM: ELIMINAR (generico) ======= -->
+<div class="cf-confirm-overlay hidden" id="cf-confirm-overlay" onclick="if(event.target===this)closeConfirm()">
   <div class="cf-confirm-box">
     <div class="cf-confirm-icon">🗑️</div>
-    <div class="cf-confirm-msg">¿Querés eliminar este movimiento?</div>
+    <div class="cf-confirm-msg" id="cf-confirm-msg">¿Querés eliminar este elemento?</div>
     <div class="cf-confirm-sub">Esta acción no se puede deshacer.</div>
     <div class="cf-confirm-btns">
-      <button class="btn-secondary" onclick="closeCfConfirm()">Cancelar</button>
-      <button class="btn-primary" onclick="confirmDeleteCf()" style="background:var(--terra)">Eliminar</button>
+      <button class="btn-secondary" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-primary" onclick="doConfirm()" style="background:var(--terra)">Eliminar</button>
     </div>
   </div>
 </div>
@@ -665,6 +665,37 @@
     <div class="cf-modal-footer">
       <button class="btn-secondary" onclick="closeCfModal()">Cancelar</button>
       <button class="btn-primary" id="cf-save-btn" onclick="saveCfMovimiento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL: NUEVO PROVEEDOR ======= -->
+<div class="cf-modal-overlay hidden" id="prov-modal-overlay" onclick="if(event.target===this)closeProvModal()">
+  <div class="cf-modal-box">
+    <div class="cf-modal-header">
+      <span class="cf-modal-title" id="prov-modal-title">Nuevo proveedor</span>
+      <button class="cf-modal-close" onclick="closeProvModal()">✕</button>
+    </div>
+    <div class="cf-modal-body">
+      <div class="cf-field">
+        <label>Nombre *</label>
+        <input type="text" id="prov-nombre" placeholder="Ej: Empresa Constructora SA">
+      </div>
+      <div class="cf-field-row">
+        <div class="cf-field">
+          <label>Total contratado (ARS)</label>
+          <input type="number" id="prov-total" placeholder="0" min="0" step="any">
+        </div>
+        <div class="cf-field">
+          <label>Pagado (ARS)</label>
+          <input type="number" id="prov-pagado" placeholder="0" min="0" step="any">
+        </div>
+      </div>
+      <div id="prov-modal-error" style="color:var(--terra);font-size:12px;min-height:16px;"></div>
+    </div>
+    <div class="cf-modal-footer">
+      <button class="btn-secondary" onclick="closeProvModal()">Cancelar</button>
+      <button class="btn-primary" id="prov-save-btn" onclick="saveProvEntry()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1599,27 +1630,38 @@ async function saveCfMovimiento() {
   }
 }
 
-let CF_DELETE_IDX = null;
+// ── Confirm generico ──────────────────────────────────────────
+let confirmPending = null;
 
+function showConfirm(msg, cb) {
+  confirmPending = cb;
+  document.getElementById('cf-confirm-msg').textContent = msg;
+  document.getElementById('cf-confirm-overlay').classList.remove('hidden');
+}
+
+function closeConfirm() {
+  confirmPending = null;
+  document.getElementById('cf-confirm-overlay').classList.add('hidden');
+}
+
+async function doConfirm() {
+  const fn = confirmPending;
+  closeConfirm();
+  if (fn) await fn();
+}
+
+// ── Cashflow: eliminar ────────────────────────────────────────
 function showCfConfirm(origIdx) {
-  CF_DELETE_IDX = origIdx;
   if (CF_MENU_OPEN) {
     const m = document.getElementById(CF_MENU_OPEN);
     if (m) m.classList.add('hidden');
     CF_MENU_OPEN = null;
   }
-  document.getElementById('cf-confirm-overlay').classList.remove('hidden');
+  showConfirm('¿Querés eliminar este movimiento?', () => actuallyDeleteCf(origIdx));
 }
 
-function closeCfConfirm() {
-  CF_DELETE_IDX = null;
-  document.getElementById('cf-confirm-overlay').classList.add('hidden');
-}
-
-async function confirmDeleteCf() {
-  if (CF_DELETE_IDX === null || !PRES_ID) return;
-  const idx = CF_DELETE_IDX;
-  closeCfConfirm();
+async function actuallyDeleteCf(idx) {
+  if (!PRES_ID) return;
   try {
     const res  = await fetch(`/api/obras/${PRES_ID}/cashflow/${idx}`, {
       method: 'DELETE',
@@ -2009,13 +2051,194 @@ async function asociarObras() {
 }
 
 // ============================================================
-// RENDER TODO
-// ============================================================
 // RENDER PROVEEDORES
 // ============================================================
-function renderProveedores() {
-  $('prov-root').innerHTML = emptyState('Los datos de proveedores se gestionan desde el Excel. Próximamente disponible.');
+let PROV_MENU_OPEN = null;
+
+function toggleProvMenu(menuId) {
+  if (PROV_MENU_OPEN && PROV_MENU_OPEN !== menuId) {
+    const prev = document.getElementById(PROV_MENU_OPEN);
+    if (prev) prev.classList.add('hidden');
+  }
+  const el = document.getElementById(menuId);
+  if (!el) return;
+  el.classList.toggle('hidden');
+  PROV_MENU_OPEN = el.classList.contains('hidden') ? null : menuId;
 }
+
+document.addEventListener('click', function(e) {
+  if (PROV_MENU_OPEN && !e.target.closest('.cf-menu-wrap')) {
+    const m = document.getElementById(PROV_MENU_OPEN);
+    if (m) m.classList.add('hidden');
+    PROV_MENU_OPEN = null;
+  }
+});
+
+function renderProveedores() {
+  const obra  = OBRAS.find(o => o.id === PRES_ID);
+  const provs = obra ? (obra.proveedores || []) : [];
+
+  const selectorRow = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <select id="sel-proveedores" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);font-size:13px;min-width:200px"></select>
+    ${PRES_ID ? `<button class="btn-primary" onclick="openProvModal()">+ Agregar proveedor</button>` : ''}
+  </div>`;
+
+  if (!provs.length) {
+    $('prov-root').innerHTML = selectorRow + emptyState('No hay proveedores cargados. Agregá uno manualmente o subí un Excel.');
+    poblarSelectores();
+    return;
+  }
+
+  const totalContratado = provs.reduce((s, p) => s + (p.totalContratado || p.gastoEjecutado || 0), 0);
+  const totalPagado     = provs.reduce((s, p) => s + (p.pagado || 0), 0);
+  const totalPendiente  = totalContratado - totalPagado;
+
+  const kpis = `<div class="kpi-row" style="margin-bottom:20px">
+    <div class="kpi-card"><div class="kpi-label">Proveedores</div><div class="kpi-value">${provs.length}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total contratado</div><div class="kpi-value">${formatPeso(totalContratado)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Pagado</div><div class="kpi-value" style="color:var(--green)">${formatPeso(totalPagado)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Pendiente</div><div class="kpi-value" style="color:var(--terra)">${formatPeso(totalPendiente)}</div></div>
+  </div>`;
+
+  const rows = provs.map((p, i) => {
+    const contratado = p.totalContratado !== undefined ? p.totalContratado : (p.gastoEjecutado || 0);
+    const pagado     = p.pagado || 0;
+    const pendiente  = contratado - pagado;
+    const pct        = contratado ? Math.round(pagado / contratado * 100) : 0;
+    const menuId     = `pm-${i}`;
+    const actions    = `<div class="cf-menu-wrap">
+      <button class="cf-edit-btn" onclick="event.stopPropagation();toggleProvMenu('${menuId}')">&#8942;</button>
+      <div class="cf-menu hidden" id="${menuId}">
+        <button class="cf-menu-item" onclick="openProvEditModal(${i})">Editar</button>
+        <button class="cf-menu-item" style="color:var(--terra)" onclick="showProvConfirm(${i})">Eliminar</button>
+      </div>
+    </div>`;
+    return `<tr>
+      <td>${p.nombre}</td>
+      <td>${formatPeso(contratado)}</td>
+      <td>${formatPeso(pagado)}</td>
+      <td>${formatPeso(pendiente)}</td>
+      <td>${pct}%</td>
+      <td style="width:32px;text-align:center">${actions}</td>
+    </tr>`;
+  }).join('');
+
+  $('prov-root').innerHTML = selectorRow + kpis + `<div class="panel">
+    <table>
+      <thead><tr>
+        <th>Proveedor</th><th>Contratado</th><th>Pagado</th><th>Pendiente</th><th>Avance</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+  poblarSelectores();
+}
+
+// ── Proveedor: modal ──────────────────────────────────────────
+let PROV_EDIT_IDX = null;
+
+function openProvModal() {
+  PROV_EDIT_IDX = null;
+  document.getElementById('prov-modal-title').textContent = 'Nuevo proveedor';
+  document.getElementById('prov-nombre').value  = '';
+  document.getElementById('prov-total').value   = '';
+  document.getElementById('prov-pagado').value  = '';
+  document.getElementById('prov-modal-error').textContent = '';
+  document.getElementById('prov-save-btn').disabled = false;
+  document.getElementById('prov-save-btn').textContent = 'Guardar';
+  document.getElementById('prov-modal-overlay').classList.remove('hidden');
+}
+
+function openProvEditModal(idx) {
+  if (PROV_MENU_OPEN) {
+    const m = document.getElementById(PROV_MENU_OPEN);
+    if (m) m.classList.add('hidden');
+    PROV_MENU_OPEN = null;
+  }
+  const obra = OBRAS.find(o => o.id === PRES_ID);
+  if (!obra) return;
+  const p = (obra.proveedores || [])[idx];
+  if (!p) return;
+  PROV_EDIT_IDX = idx;
+  document.getElementById('prov-modal-title').textContent = 'Editar proveedor';
+  document.getElementById('prov-nombre').value  = p.nombre || '';
+  document.getElementById('prov-total').value   = p.totalContratado !== undefined ? p.totalContratado : (p.gastoEjecutado || '');
+  document.getElementById('prov-pagado').value  = p.pagado || '';
+  document.getElementById('prov-modal-error').textContent = '';
+  document.getElementById('prov-save-btn').disabled = false;
+  document.getElementById('prov-save-btn').textContent = 'Guardar';
+  document.getElementById('prov-modal-overlay').classList.remove('hidden');
+}
+
+function closeProvModal() {
+  PROV_EDIT_IDX = null;
+  document.getElementById('prov-modal-overlay').classList.add('hidden');
+}
+
+async function saveProvEntry() {
+  const nombre = document.getElementById('prov-nombre').value.trim();
+  const total  = parseFloat(document.getElementById('prov-total').value)  || 0;
+  const pagado = parseFloat(document.getElementById('prov-pagado').value) || 0;
+  const errEl  = document.getElementById('prov-modal-error');
+  const saveBtn = document.getElementById('prov-save-btn');
+
+  if (!nombre) { errEl.textContent = 'El nombre es obligatorio.'; return; }
+  if (!PRES_ID) { errEl.textContent = 'Seleccioná una obra primero.'; return; }
+
+  errEl.textContent  = '';
+  saveBtn.disabled   = true;
+  saveBtn.textContent = 'Guardando...';
+
+  const isEdit = PROV_EDIT_IDX !== null;
+  const url    = isEdit
+    ? `/api/obras/${PRES_ID}/proveedores/${PROV_EDIT_IDX}`
+    : `/api/obras/${PRES_ID}/proveedores`;
+
+  try {
+    const res  = await fetch(url, {
+      method: isEdit ? 'PUT' : 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, totalContratado: total, pagado })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al guardar');
+    applyData(data.data);
+    renderAll();
+    closeProvModal();
+    showToast(isEdit ? 'Proveedor actualizado' : 'Proveedor agregado');
+  } catch (err) {
+    errEl.textContent   = err.message;
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Guardar';
+  }
+}
+
+function showProvConfirm(idx) {
+  if (PROV_MENU_OPEN) {
+    const m = document.getElementById(PROV_MENU_OPEN);
+    if (m) m.classList.add('hidden');
+    PROV_MENU_OPEN = null;
+  }
+  showConfirm('¿Querés eliminar este proveedor?', () => actuallyDeleteProv(idx));
+}
+
+async function actuallyDeleteProv(idx) {
+  if (!PRES_ID) return;
+  try {
+    const res  = await fetch(`/api/obras/${PRES_ID}/proveedores/${idx}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al eliminar');
+    applyData(data.data);
+    renderAll();
+    showToast('Proveedor eliminado');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+// ============================================================
 // ============================================================
 function renderAll() {
   renderKpiTop();
