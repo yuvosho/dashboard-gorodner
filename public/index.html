@@ -601,6 +601,9 @@
 <!-- ======= TOAST ======= -->
 <div class="toast" id="toast"></div>
 
+<!-- ======= TOOLTIP CASHFLOW ======= -->
+<div id="cf-tooltip" style="display:none;position:fixed;background:var(--card-bg);border:1px solid var(--border);border-radius:9px;padding:10px 14px;font-size:12px;line-height:1.7;pointer-events:none;z-index:5000;box-shadow:0 3px 14px rgba(60,50,40,0.13)"></div>
+
 <!-- ======= CONFIRM: ELIMINAR MOVIMIENTO ======= -->
 <div class="cf-confirm-overlay hidden" id="cf-confirm-overlay" onclick="if(event.target===this)closeCfConfirm()">
   <div class="cf-confirm-box">
@@ -656,10 +659,6 @@
       <div class="cf-field">
         <label>Rubro</label>
         <select id="cf-rubro"></select>
-      </div>
-      <div class="cf-field">
-        <label>Proveedor</label>
-        <select id="cf-proveedor"></select>
       </div>
       <div id="cf-modal-error" style="color:var(--terra);font-size:12px;min-height:16px;"></div>
     </div>
@@ -1050,6 +1049,21 @@ let PRES_ID = null; // id de la obra seleccionada en presupuesto
 
 const CF = { saldoInicial: 0, movimientos: [] };
 let CF_EDIT_IDX  = null;
+
+function showCfTooltip(e, label, ing, gas, net) {
+  const t = document.getElementById('cf-tooltip');
+  const sign = net >= 0 ? '+' : '';
+  t.innerHTML = '<strong style="color:var(--text)">' + label + '</strong><br>' +
+    '<span style="color:#8FA876">&#9650; Ingresos: ' + formatPeso(ing) + '</span><br>' +
+    '<span style="color:#C97B5B">&#9660; Gastos: '   + formatPeso(gas) + '</span><br>' +
+    '<span style="color:' + (net >= 0 ? '#5C6E48' : '#C97B5B') + '">= Neto: ' + sign + formatPeso(Math.abs(net)) + '</span>';
+  t.style.display = 'block';
+  t.style.left = (e.clientX + 14) + 'px';
+  t.style.top  = (e.clientY - 10) + 'px';
+}
+function hideCfTooltip() {
+  document.getElementById('cf-tooltip').style.display = 'none';
+}
 let CF_MENU_OPEN = null;
 
 function toggleCfMenu(id) {
@@ -1481,7 +1495,7 @@ function toggleRubro(cod) {
 // ============================================================
 // CASHFLOW MANUAL — MODAL
 // ============================================================
-function _buildCfSelects(selectedRubro, selectedProv) {
+function _buildCfSelects(selectedRubro) {
   const obra = OBRAS.find(o => o.id === PRES_ID);
 
   const rubroSel = document.getElementById('cf-rubro');
@@ -1501,17 +1515,6 @@ function _buildCfSelects(selectedRubro, selectedProv) {
     });
   });
 
-  const provNombres = new Set();
-  (obra && obra.proveedores || []).forEach(p => { if (p.nombre) provNombres.add(p.nombre); });
-  (obra && obra.cashflow    || []).forEach(m => { if (m.proveedor) provNombres.add(m.proveedor); });
-  const provSel = document.getElementById('cf-proveedor');
-  provSel.innerHTML = '<option value="">&mdash; Sin proveedor &mdash;</option>';
-  [...provNombres].sort().forEach(nombre => {
-    const opt = document.createElement('option');
-    opt.value = opt.textContent = nombre;
-    if (nombre === selectedProv) opt.selected = true;
-    provSel.appendChild(opt);
-  });
 }
 
 function openCfModal() {
@@ -1525,7 +1528,7 @@ function openCfModal() {
   document.getElementById('cf-modal-error').textContent = '';
   document.getElementById('cf-save-btn').disabled = false;
   document.getElementById('cf-save-btn').textContent = 'Guardar';
-  _buildCfSelects('', '');
+  _buildCfSelects('');
   document.getElementById('cf-modal-overlay').classList.remove('hidden');
   document.getElementById('cf-monto').focus();
 }
@@ -1543,7 +1546,7 @@ function openCfEditModal(origIdx) {
   document.getElementById('cf-modal-error').textContent = '';
   document.getElementById('cf-save-btn').disabled = false;
   document.getElementById('cf-save-btn').textContent = 'Guardar';
-  _buildCfSelects(m.rubro || '', m.proveedor || '');
+  _buildCfSelects(m.rubro || '');
   document.getElementById('cf-modal-overlay').classList.remove('hidden');
   document.getElementById('cf-monto').focus();
 }
@@ -1559,7 +1562,7 @@ async function saveCfMovimiento() {
   const monto     = parseFloat(document.getElementById('cf-monto').value);
   const desc      = document.getElementById('cf-desc').value.trim();
   const rubro     = document.getElementById('cf-rubro').value;
-  const proveedor = document.getElementById('cf-proveedor').value;
+
   const estado    = document.getElementById('cf-estado').value;
   const errEl     = document.getElementById('cf-modal-error');
   const saveBtn   = document.getElementById('cf-save-btn');
@@ -1581,7 +1584,7 @@ async function saveCfMovimiento() {
     const res  = await fetch(url, {
       method:  isEdit ? 'PUT' : 'POST',
       headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ fecha, tipo, monto, desc, rubro, proveedor, estado })
+      body:    JSON.stringify({ fecha, tipo, monto, desc, rubro, estado })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al guardar');
@@ -1654,39 +1657,52 @@ function renderCashflow() {
     else                      byMonth[mes].gas += m.monto;
   });
   const meses = Object.keys(byMonth).sort();
-  const mesLabels = { '2026-01':'Ene','2026-02':'Feb','2026-03':'Mar','2026-04':'Abr','2026-05':'May','2026-06':'Jun' };
+  const ML = {'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'};
+  const getMesLabel = mes => ML[mes.slice(5)] || mes.slice(5);
 
-  const maxVal = Math.max(...meses.map(m => Math.max(byMonth[m].ing, byMonth[m].gas)));
-  const cW = 380, padL = 46, padR = 8, padT = 8, padB = 28, plotH = 109;
-  const cH = padT + plotH + padB + 22;
+  const maxPos     = Math.max(1, ...meses.map(m => byMonth[m].ing - byMonth[m].gas).filter(v => v > 0));
+  const maxNeg     = Math.max(0, ...meses.map(m => byMonth[m].gas - byMonth[m].ing).filter(v => v > 0));
+  const totalRange = maxPos + maxNeg || 1;
+  const cW = 380, padL = 52, padR = 8, padT = 12, padB = 28, plotH = 120;
+  const cH = padT + plotH + padB + 20;
   const plotW = cW - padL - padR;
-  const colW = plotW / meses.length, barW = colW * 0.34;
-  const legendY = padT + plotH + padB + 13;
+  const zeroY = padT + (maxPos / totalRange) * plotH;
+  const colW  = plotW / (meses.length || 1);
+  const barW  = Math.min(colW * 0.5, 30);
 
-  const gridLines = [0.25,0.5,0.75,1].map(s => {
-    const y = padT + plotH - s * plotH;
-    const lbl = (maxVal * s / 1000000).toFixed(0) + 'M';
-    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${cW-padR}" y2="${y.toFixed(1)}" stroke="#EDE5D8" stroke-width="1" stroke-dasharray="2 3"/>
-            <text x="${padL-4}" y="${(y+3.5).toFixed(1)}" text-anchor="end" fill="#8A847E" font-size="9" font-family="inherit">${lbl}</text>`;
-  }).join('');
+  const fmtLbl = v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v.toFixed(0);
+  const gridParts = [];
+  if (maxPos > 0) [0.5,1].forEach(s => {
+    const yy = zeroY - s * (maxPos / totalRange) * plotH;
+    gridParts.push(`<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${cW-padR}" y2="${yy.toFixed(1)}" stroke="#EDE5D8" stroke-width="1" stroke-dasharray="2 3"/><text x="${padL-4}" y="${(yy+3.5).toFixed(1)}" text-anchor="end" fill="#8A847E" font-size="9" font-family="inherit">+${fmtLbl(maxPos*s)}</text>`);
+  });
+  if (maxNeg > 0) [0.5,1].forEach(s => {
+    const yy = zeroY + s * (maxNeg / totalRange) * plotH;
+    gridParts.push(`<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${cW-padR}" y2="${yy.toFixed(1)}" stroke="#EDE5D8" stroke-width="1" stroke-dasharray="2 3"/><text x="${padL-4}" y="${(yy+3.5).toFixed(1)}" text-anchor="end" fill="#8A847E" font-size="9" font-family="inherit">-${fmtLbl(maxNeg*s)}</text>`);
+  });
+  const gridLines = gridParts.join('') + `<line x1="${padL}" y1="${zeroY.toFixed(1)}" x2="${cW-padR}" y2="${zeroY.toFixed(1)}" stroke="#8A847E" stroke-width="0.8"/>`;
 
   const bars = meses.map((mes, i) => {
+    const net  = byMonth[mes].ing - byMonth[mes].gas;
     const cx   = padL + i * colW + colW / 2;
-    const ingH = byMonth[mes].ing / maxVal * plotH;
-    const gasH = byMonth[mes].gas / maxVal * plotH;
-    return `<rect x="${(cx-barW-1).toFixed(1)}" y="${(padT+plotH-ingH).toFixed(1)}" width="${barW.toFixed(1)}" height="${ingH.toFixed(1)}" rx="3" fill="#8FA876" fill-opacity="0.85"/>
-      <rect x="${(cx+1).toFixed(1)}" y="${(padT+plotH-gasH).toFixed(1)}" width="${barW.toFixed(1)}" height="${gasH.toFixed(1)}" rx="3" fill="#C97B5B" fill-opacity="0.75"/>
-      <text x="${cx.toFixed(1)}" y="${(padT+plotH+14).toFixed(1)}" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">${mesLabels[mes]||mes}</text>`;
+    const absH = Math.max(Math.abs(net) / totalRange * plotH, 1);
+    const y    = net >= 0 ? zeroY - absH : zeroY;
+    const fill = net >= 0 ? '#8FA876' : '#C97B5B';
+    const lbl  = getMesLabel(mes);
+    const ing  = byMonth[mes].ing;
+    const gas  = byMonth[mes].gas;
+    return `<g>
+      <rect x="${(cx-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${absH.toFixed(1)}" rx="3" fill="${fill}" fill-opacity="0.85"/>
+      <text x="${cx.toFixed(1)}" y="${(padT+plotH+padB+13).toFixed(1)}" text-anchor="middle" fill="#8A847E" font-size="9" font-family="inherit">${lbl}</text>
+      <rect x="${(cx-colW/2).toFixed(1)}" y="${padT}" width="${colW.toFixed(1)}" height="${(plotH+padB).toFixed(1)}" fill="transparent"
+        onmouseenter="showCfTooltip(event,'${lbl}',${ing},${gas},${net})"
+        onmouseleave="hideCfTooltip()"/>
+    </g>`;
   }).join('');
 
-  const chart = `<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">
+  const chart = `<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
     ${gridLines}${bars}
-    <circle cx="${padL}" cy="${(legendY-3).toFixed(1)}" r="4" fill="#8FA876"/>
-    <text x="${padL+8}" y="${legendY.toFixed(1)}" fill="#8A847E" font-size="9" font-family="inherit">Ingresos</text>
-    <circle cx="${padL+65}" cy="${(legendY-3).toFixed(1)}" r="4" fill="#C97B5B"/>
-    <text x="${padL+73}" y="${legendY.toFixed(1)}" fill="#8A847E" font-size="9" font-family="inherit">Gastos</text>
   </svg>`;
-
   const stats = [
     { label:'Total Ingresos',  value:formatPeso(totalIngresos), cls:'pos' },
     { label:'Total Gastos',    value:formatPeso(totalGastos),   cls:'neg' },
@@ -1719,7 +1735,7 @@ function renderCashflow() {
       <td><span class="${tipoCls}">${m.tipo}</span></td>
       <td style="color:var(--terra);font-size:11px;font-weight:700">${m.rubro}</td>
       <td>${m.desc}</td>
-      <td style="color:var(--text-muted)">${m.proveedor}</td>
+
       <td class="amount" style="color:${amtColor}">${signo}${formatPeso(m.monto)}</td>
       <td><span class="badge ${estadoCls}">${m.estado}</span></td>
       <td style="width:32px;text-align:center">${actionsCell}</td>
@@ -1790,7 +1806,7 @@ function renderCashflow() {
         </div>
         <table>
           <thead>
-            <tr><th>Fecha</th><th>Tipo</th><th>Rubro</th><th>Descripción</th><th>Proveedor</th><th>Monto</th><th>Estado</th><th></th></tr>
+            <tr><th>Fecha</th><th>Tipo</th><th>Rubro</th><th>Descripción</th><th>Monto</th><th>Estado</th><th></th></tr>
           </thead>
           <tbody>${movRows}</tbody>
         </table>
@@ -1998,140 +2014,8 @@ async function asociarObras() {
 // RENDER PROVEEDORES
 // ============================================================
 function renderProveedores() {
-  const root = $('prov-root');
-
-  // Fuente primaria: hoja "Proveedores" del Excel (obra.proveedores)
-  const obraActual   = OBRAS.find(o => o.id === PRES_ID);
-  const provExcel    = (obraActual?.proveedores || []).filter(p => p.nombre);
-
-  // Fuente secundaria: cashflow (para calcular pagado/pendiente por proveedor)
-  const gastosCF = CF.movimientos.filter(m => m.tipo === 'Gasto' && m.proveedor);
-  const cfPorProv = {};
-  gastosCF.forEach(m => {
-    const key = m.proveedor.trim().toLowerCase();
-    if (!cfPorProv[key]) cfPorProv[key] = { pagado: 0, pendiente: 0 };
-    const esPagado = m.estado === 'Pagado' || m.estado === 'Cobrado';
-    if (esPagado) cfPorProv[key].pagado    += m.monto;
-    else          cfPorProv[key].pendiente += m.monto;
-  });
-
-  if (!provExcel.length && !gastosCF.length) {
-    root.innerHTML = emptyState('Subí un Excel con la hoja "Proveedores" para ver el detalle.');
-    return;
-  }
-
-  // Armar lista final
-  let proveedores;
-  if (provExcel.length) {
-    // Usar datos de la hoja Proveedores, cruzar con cashflow para pagado/pendiente
-    proveedores = provExcel.map(p => {
-      const cf      = cfPorProv[p.nombre.trim().toLowerCase()] || { pagado: 0, pendiente: 0 };
-      const total   = p.gastoEjecutado || (cf.pagado + cf.pendiente);
-      const pagado  = cf.pagado   || (cf.pendiente === 0 ? total : 0);
-      const pendiente = cf.pendiente || 0;
-      // pct del Excel puede ser fracción (0.25) o porcentaje (25)
-      const pctVal  = p.pct > 1 ? p.pct : Math.round(p.pct * 100);
-      return { nombre: p.nombre, total, pagado, pendiente, pct: pctVal };
-    }).sort((a, b) => b.total - a.total);
-  } else {
-    // Fallback: derivar del cashflow
-    const provMap = {};
-    gastosCF.forEach(m => {
-      const key = m.proveedor.trim();
-      if (!provMap[key]) provMap[key] = { nombre: key, pagado: 0, pendiente: 0 };
-      const esPagado = m.estado === 'Pagado' || m.estado === 'Cobrado';
-      if (esPagado) provMap[key].pagado    += m.monto;
-      else          provMap[key].pendiente += m.monto;
-    });
-    proveedores = Object.values(provMap).map(p => ({
-      nombre: p.nombre, total: p.pagado + p.pendiente,
-      pagado: p.pagado, pendiente: p.pendiente, pct: 0
-    })).sort((a, b) => b.total - a.total);
-  }
-
-  const totalPagado    = proveedores.reduce((s, p) => s + p.pagado,    0);
-  const totalPendiente = proveedores.reduce((s, p) => s + p.pendiente, 0);
-  const totalGeneral   = proveedores.reduce((s, p) => s + p.total,     0);
-
-  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
-    DATOS.obras.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
-
-  const bannerHtml = window._lastUser
-    ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
-    : `<div class="data-banner">✅ Datos cargados</div>`;
-
-  const tableRows = proveedores.map(p => {
-    const estado      = p.pendiente > 0 ? 'pendiente' : 'aldia';
-    const estadoLabel = p.pendiente > 0 ? 'Pendiente' : 'Al día';
-    const pct = p.pct || (totalGeneral ? Math.round(p.total / totalGeneral * 100) : 0);
-    return `<tr>
-      <td><strong>${p.nombre}</strong></td>
-      <td class="amount">${formatPeso(p.total)}</td>
-      <td class="amount">${p.pagado   ? formatPeso(p.pagado)    : '<span style="color:var(--text-muted)">—</span>'}</td>
-      <td class="amount">${p.pendiente? formatPeso(p.pendiente) : '<span style="color:var(--text-muted)">—</span>'}</td>
-      <td><div class="pct-cell"><div class="pct-bar"><span style="width:${Math.min(pct,100)}%"></span></div><span class="pct-text">${pct}%</span></div></td>
-      <td><span class="badge ${estado}">${estadoLabel}</span></td>
-    </tr>`;
-  }).join('');
-
-  root.innerHTML = `
-    ${bannerHtml}
-    <div class="kpi-row-4">
-      <div class="kpi">
-        <div class="kpi-icon taupe">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-label">Proveedores</span>
-          <span class="kpi-value">${proveedores.length}</span>
-          <span class="kpi-sub">activos en esta obra</span>
-        </div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-icon green">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-label">Total Pagado</span>
-          <span class="kpi-value">${formatPeso(totalPagado)}</span>
-          <span class="kpi-sub">${totalGeneral ? Math.round(totalPagado/totalGeneral*100) : 0}% del total</span>
-        </div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-icon terra">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-label">Pendiente de Pago</span>
-          <span class="kpi-value">${formatPeso(totalPendiente)}</span>
-          <span class="kpi-sub">${proveedores.filter(p=>p.pendiente>0).length} proveedor${proveedores.filter(p=>p.pendiente>0).length!==1?'es':''} con saldo</span>
-        </div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-icon green">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-label">Total Contratado</span>
-          <span class="kpi-value">${formatPeso(totalGeneral)}</span>
-          <span class="kpi-sub">entre ${proveedores.length} proveedor${proveedores.length!==1?'es':''}</span>
-        </div>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="tab-header">
-        <div class="panel-title">Detalle por Proveedor</div>
-        <div class="obra-selector"><span>Obra:</span><select id="sel-proveedores">${obraOpts}</select></div>
-      </div>
-      <table>
-        <thead>
-          <tr><th>Proveedor</th><th>Gasto ejecutado</th><th>Pagado</th><th>Pendiente</th><th>% del total</th><th>Estado</th></tr>
-        </thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-    </div>`;
+  $('prov-root').innerHTML = emptyState('Los datos de proveedores se gestionan desde el Excel. Próximamente disponible.');
 }
-
 // ============================================================
 function renderAll() {
   renderKpiTop();
