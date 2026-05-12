@@ -609,7 +609,7 @@
     <div class="cf-confirm-sub">Esta acción no se puede deshacer.</div>
     <div class="cf-confirm-btns">
       <button class="btn-secondary" onclick="closeCfConfirm()">Cancelar</button>
-      <button class="btn-primary cf-menu-del" onclick="confirmDeleteCf()" style="border:none">Eliminar</button>
+      <button class="btn-primary" onclick="confirmDeleteCf()" style="background:var(--terra)">Eliminar</button>
     </div>
   </div>
 </div>
@@ -1586,6 +1586,7 @@ async function saveCfMovimiento() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al guardar');
     applyData(data.data);
+    renderAll();
     closeCfModal();
     showToast(isEdit ? 'Movimiento actualizado' : 'Movimiento agregado');
   } catch (err) {
@@ -1624,6 +1625,7 @@ async function confirmDeleteCf() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al eliminar');
     applyData(data.data);
+    renderAll();
     showToast('Movimiento eliminado');
   } catch (err) {
     showToast(err.message, 'error');
