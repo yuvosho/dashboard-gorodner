@@ -225,16 +225,17 @@ app.put('/api/obras/:id/cashflow/:idx', auth, (req, res) => {
 });
 
 // Eliminar movimiento manual de cashflow
-app.delete('/api/obras/:id/cashflow/:movId', auth, (req, res) => {
-  const data = readData();
-  const idx  = data.obras.findIndex(o => o.id === req.params.id);
-  if (idx < 0) return res.status(404).json({ error: 'Obra no encontrada' });
+app.delete('/api/obras/:id/cashflow/:idx', auth, (req, res) => {
+  const data    = readData();
+  const obraIdx = data.obras.findIndex(o => o.id === req.params.id);
+  if (obraIdx < 0) return res.status(404).json({ error: 'Obra no encontrada' });
 
-  const cf     = data.obras[idx].cashflow || [];
-  const before = cf.length;
-  data.obras[idx].cashflow = cf.filter(m => m.id !== req.params.movId);
-  if (data.obras[idx].cashflow.length === before) return res.status(404).json({ error: 'Movimiento no encontrado' });
+  const cf     = data.obras[obraIdx].cashflow || [];
+  const movIdx = parseInt(req.params.idx, 10);
+  if (isNaN(movIdx) || movIdx < 0 || movIdx >= cf.length) return res.status(404).json({ error: 'Movimiento no encontrado' });
 
+  cf.splice(movIdx, 1);
+  data.obras[obraIdx].cashflow = cf;
   writeData(data);
   res.json({ ok: true, data });
 });

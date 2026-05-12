@@ -121,6 +121,20 @@
   }
   .btn-primary:hover { background: #b56a4a; }
   .btn-primary:disabled { background: var(--taupe); cursor: default; }
+  .cf-confirm-overlay {
+    position: fixed; inset: 0; background: rgba(60,50,40,0.4);
+    z-index: 9995; display: flex; align-items: center; justify-content: center;
+  }
+  .cf-confirm-overlay.hidden { display: none; }
+  .cf-confirm-box {
+    background: var(--card-bg); border-radius: 14px; padding: 28px 32px;
+    box-shadow: 0 6px 28px rgba(60,50,40,0.16); max-width: 320px; width: 90vw; text-align: center;
+  }
+  .cf-confirm-icon { font-size: 28px; margin-bottom: 12px; }
+  .cf-confirm-msg { font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .cf-confirm-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 22px; }
+  .cf-confirm-btns { display: flex; gap: 10px; justify-content: center; }
+
   .cf-menu-wrap { position: relative; display: inline-block; }
   .cf-edit-btn {
     background: none; border: none; color: var(--text-muted); cursor: pointer;
@@ -586,6 +600,19 @@
 
 <!-- ======= TOAST ======= -->
 <div class="toast" id="toast"></div>
+
+<!-- ======= CONFIRM: ELIMINAR MOVIMIENTO ======= -->
+<div class="cf-confirm-overlay hidden" id="cf-confirm-overlay" onclick="if(event.target===this)closeCfConfirm()">
+  <div class="cf-confirm-box">
+    <div class="cf-confirm-icon">🗑️</div>
+    <div class="cf-confirm-msg">¿Querés eliminar este movimiento?</div>
+    <div class="cf-confirm-sub">Esta acción no se puede deshacer.</div>
+    <div class="cf-confirm-btns">
+      <button class="btn-secondary" onclick="closeCfConfirm()">Cancelar</button>
+      <button class="btn-primary cf-menu-del" onclick="confirmDeleteCf()" style="border:none">Eliminar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ======= MODAL: NUEVO MOVIMIENTO CASHFLOW ======= -->
 <div class="cf-modal-overlay hidden" id="cf-modal-overlay" onclick="if(event.target===this)closeCfModal()">
@@ -1568,11 +1595,29 @@ async function saveCfMovimiento() {
   }
 }
 
-async function deleteCfMovimiento(movId) {
-  if (!PRES_ID) return;
-  if (!confirm('¿Eliminar este movimiento?')) return;
+let CF_DELETE_IDX = null;
+
+function showCfConfirm(origIdx) {
+  CF_DELETE_IDX = origIdx;
+  if (CF_MENU_OPEN) {
+    const m = document.getElementById(CF_MENU_OPEN);
+    if (m) m.classList.add('hidden');
+    CF_MENU_OPEN = null;
+  }
+  document.getElementById('cf-confirm-overlay').classList.remove('hidden');
+}
+
+function closeCfConfirm() {
+  CF_DELETE_IDX = null;
+  document.getElementById('cf-confirm-overlay').classList.add('hidden');
+}
+
+async function confirmDeleteCf() {
+  if (CF_DELETE_IDX === null || !PRES_ID) return;
+  const idx = CF_DELETE_IDX;
+  closeCfConfirm();
   try {
-    const res  = await fetch(`/api/obras/${PRES_ID}/cashflow/${movId}`, {
+    const res  = await fetch(`/api/obras/${PRES_ID}/cashflow/${idx}`, {
       method: 'DELETE',
       headers: { 'Authorization': 'Bearer ' + getToken() }
     });
@@ -1659,9 +1704,7 @@ function renderCashflow() {
     const signo     = m.tipo === 'Ingreso' ? '+' : '–';
     const amtColor  = m.tipo === 'Ingreso' ? 'var(--green-dark)' : 'var(--terra)';
     const menuId  = `cfm-${origIdx}`;
-    const delItem = m.manual && m.id
-      ? `<button class="cf-menu-item cf-menu-del" onclick="deleteCfMovimiento('${m.id}')">Eliminar</button>`
-      : '';
+    const delItem = `<button class="cf-menu-item cf-menu-del" onclick="showCfConfirm(${origIdx})">Eliminar</button>`;
     const actionsCell = `<div class="cf-menu-wrap">
       <button class="cf-edit-btn" onclick="event.stopPropagation();toggleCfMenu('${menuId}')">⋮</button>
       <div class="cf-menu hidden" id="${menuId}">
