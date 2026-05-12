@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -127,6 +127,12 @@
     line-height: 1;
   }
   .cf-del-btn:hover { color: var(--terra); background: var(--terra-soft); }
+  .cf-edit-btn {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    font-size: 15px; padding: 2px 5px; border-radius: 4px; transition: color 0.15s, background 0.15s;
+    line-height: 1; letter-spacing: -1px;
+  }
+  .cf-edit-btn:hover { color: var(--text); background: var(--border); }
 
   /* ======= LAYOUT ======= */
   .layout {
@@ -575,7 +581,7 @@
 <div class="cf-modal-overlay hidden" id="cf-modal-overlay" onclick="if(event.target===this)closeCfModal()">
   <div class="cf-modal-box">
     <div class="cf-modal-header">
-      <span class="cf-modal-title">Nuevo movimiento</span>
+      <span class="cf-modal-title" id="cf-modal-title">Nuevo movimiento</span>
       <button class="cf-modal-close" onclick="closeCfModal()">✕</button>
     </div>
     <div class="cf-modal-body">
@@ -1006,6 +1012,7 @@ let PRES = { obra: '', cliente: '', rubros: [] };
 let PRES_ID = null; // id de la obra seleccionada en presupuesto
 
 const CF = { saldoInicial: 0, movimientos: [] };
+let CF_EDIT_IDX = null;
 
 // HTML del estado vacío
 function emptyState(msg) {
@@ -1416,52 +1423,76 @@ function toggleRubro(cod) {
 // ============================================================
 // CASHFLOW MANUAL — MODAL
 // ============================================================
+function _buildCfSelects(selectedRubro, selectedProv) {
+  const obra = OBRAS.find(o => o.id === PRES_ID);
+
+  const rubroSel = document.getElementById('cf-rubro');
+  rubroSel.innerHTML = '<option value="">&mdash; Sin rubro &mdash;</option>';
+  (obra ? obra.rubros || [] : []).forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.cod;
+    opt.textContent = r.cod + ' — ' + r.desc;
+    if (r.cod === selectedRubro) opt.selected = true;
+    rubroSel.appendChild(opt);
+    (r.items || []).forEach(sub => {
+      const s = document.createElement('option');
+      s.value = sub.cod;
+      s.textContent = '   ' + sub.cod + ' — ' + sub.desc;
+      if (sub.cod === selectedRubro) s.selected = true;
+      rubroSel.appendChild(s);
+    });
+  });
+
+  const provNombres = new Set();
+  (obra && obra.proveedores || []).forEach(p => { if (p.nombre) provNombres.add(p.nombre); });
+  (obra && obra.cashflow    || []).forEach(m => { if (m.proveedor) provNombres.add(m.proveedor); });
+  const provSel = document.getElementById('cf-proveedor');
+  provSel.innerHTML = '<option value="">&mdash; Sin proveedor &mdash;</option>';
+  [...provNombres].sort().forEach(nombre => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = nombre;
+    if (nombre === selectedProv) opt.selected = true;
+    provSel.appendChild(opt);
+  });
+}
+
 function openCfModal() {
-  const today = new Date().toISOString().slice(0, 10);
-  document.getElementById('cf-fecha').value  = today;
+  CF_EDIT_IDX = null;
+  document.getElementById('cf-modal-title').textContent = 'Nuevo movimiento';
+  document.getElementById('cf-fecha').value  = new Date().toISOString().slice(0, 10);
   document.getElementById('cf-tipo').value   = 'Ingreso';
   document.getElementById('cf-monto').value  = '';
   document.getElementById('cf-desc').value   = '';
   document.getElementById('cf-estado').value = 'Pendiente';
   document.getElementById('cf-modal-error').textContent = '';
   document.getElementById('cf-save-btn').disabled = false;
+  document.getElementById('cf-save-btn').textContent = 'Guardar';
+  _buildCfSelects('', '');
+  document.getElementById('cf-modal-overlay').classList.remove('hidden');
+  document.getElementById('cf-monto').focus();
+}
 
-  // Poblar select de rubros (principales + subrubros) desde la obra activa
-  const obra      = OBRAS.find(o => o.id === PRES_ID);
-  const rubros    = obra ? (obra.rubros || []) : [];
-  const rubroSel  = document.getElementById('cf-rubro');
-  rubroSel.innerHTML = '<option value="">— Sin rubro —</option>';
-  rubros.forEach(r => {
-    const opt = document.createElement('option');
-    opt.value       = r.cod;
-    opt.textContent = `${r.cod} — ${r.desc}`;
-    rubroSel.appendChild(opt);
-    (r.items || []).forEach(sub => {
-      const subOpt = document.createElement('option');
-      subOpt.value       = sub.cod;
-      subOpt.textContent = `   ${sub.cod} — ${sub.desc}`;
-      rubroSel.appendChild(subOpt);
-    });
-  });
-
-  // Poblar select de proveedores desde obra.proveedores + nombres únicos del cashflow
-  const provNombres = new Set();
-  (obra && obra.proveedores || []).forEach(p => { if (p.nombre) provNombres.add(p.nombre); });
-  (obra && obra.cashflow    || []).forEach(m => { if (m.proveedor) provNombres.add(m.proveedor); });
-  const provSel = document.getElementById('cf-proveedor');
-  provSel.innerHTML = '<option value="">— Sin proveedor —</option>';
-  [...provNombres].sort().forEach(nombre => {
-    const opt = document.createElement('option');
-    opt.value = opt.textContent = nombre;
-    provSel.appendChild(opt);
-  });
-
+function openCfEditModal(origIdx) {
+  const m = CF.movimientos[origIdx];
+  if (!m) return;
+  CF_EDIT_IDX = origIdx;
+  document.getElementById('cf-modal-title').textContent = 'Editar movimiento';
+  document.getElementById('cf-fecha').value  = m.fecha  || '';
+  document.getElementById('cf-tipo').value   = m.tipo   || 'Ingreso';
+  document.getElementById('cf-monto').value  = m.monto  || '';
+  document.getElementById('cf-desc').value   = m.desc   || '';
+  document.getElementById('cf-estado').value = m.estado || 'Pendiente';
+  document.getElementById('cf-modal-error').textContent = '';
+  document.getElementById('cf-save-btn').disabled = false;
+  document.getElementById('cf-save-btn').textContent = 'Guardar';
+  _buildCfSelects(m.rubro || '', m.proveedor || '');
   document.getElementById('cf-modal-overlay').classList.remove('hidden');
   document.getElementById('cf-monto').focus();
 }
 
 function closeCfModal() {
   document.getElementById('cf-modal-overlay').classList.add('hidden');
+  CF_EDIT_IDX = null;
 }
 
 async function saveCfMovimiento() {
@@ -1469,31 +1500,36 @@ async function saveCfMovimiento() {
   const tipo      = document.getElementById('cf-tipo').value;
   const monto     = parseFloat(document.getElementById('cf-monto').value);
   const desc      = document.getElementById('cf-desc').value.trim();
-  const rubro     = document.getElementById('cf-rubro').value.trim();
-  const proveedor = document.getElementById('cf-proveedor').value.trim();
+  const rubro     = document.getElementById('cf-rubro').value;
+  const proveedor = document.getElementById('cf-proveedor').value;
   const estado    = document.getElementById('cf-estado').value;
   const errEl     = document.getElementById('cf-modal-error');
   const saveBtn   = document.getElementById('cf-save-btn');
 
-  if (!fecha)            { errEl.textContent = 'Ingresá una fecha'; return; }
+  if (!fecha)               { errEl.textContent = 'Ingresá una fecha'; return; }
   if (!monto || monto <= 0) { errEl.textContent = 'Ingresá un monto válido'; return; }
-  if (!PRES_ID)          { errEl.textContent = 'Seleccioná una obra primero'; return; }
+  if (!PRES_ID)             { errEl.textContent = 'Selección una obra primero'; return; }
 
   errEl.textContent = '';
   saveBtn.disabled  = true;
   saveBtn.textContent = 'Guardando...';
 
+  const isEdit = CF_EDIT_IDX !== null;
+  const url    = isEdit
+    ? '/api/obras/' + PRES_ID + '/cashflow/' + CF_EDIT_IDX
+    : '/api/obras/' + PRES_ID + '/cashflow';
+
   try {
-    const res  = await fetch(`/api/obras/${PRES_ID}/cashflow`, {
-      method: 'POST',
+    const res  = await fetch(url, {
+      method:  isEdit ? 'PUT' : 'POST',
       headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fecha, tipo, monto, desc, rubro, proveedor, estado })
+      body:    JSON.stringify({ fecha, tipo, monto, desc, rubro, proveedor, estado })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al guardar');
     applyData(data.data);
     closeCfModal();
-    showToast('Movimiento agregado');
+    showToast(isEdit ? 'Movimiento actualizado' : 'Movimiento agregado');
   } catch (err) {
     errEl.textContent = err.message;
     saveBtn.disabled  = false;
@@ -1585,11 +1621,13 @@ function renderCashflow() {
   ).join('');
 
   const fmtF = f => { const [y,m,d] = f.split('-'); return `${d}/${m}/${y}`; };
-  const movRows = [...movs].reverse().map(m => {
+  const movRows = [...movs].reverse().map((m, displayIdx) => {
+    const origIdx   = movs.length - 1 - displayIdx;
     const tipoCls   = m.tipo === 'Ingreso' ? 'tipo-ingreso' : 'tipo-gasto';
     const estadoCls = m.estado === 'Cobrado' ? 'cobrado' : m.estado === 'Pagado' ? 'pagado' : 'pendiente-cf';
     const signo     = m.tipo === 'Ingreso' ? '+' : '–';
     const amtColor  = m.tipo === 'Ingreso' ? 'var(--green-dark)' : 'var(--terra)';
+    const editBtn   = `<button class="cf-edit-btn" onclick="openCfEditModal(${origIdx})" title="Editar">⋮</button>`;
     const delBtn    = m.manual && m.id
       ? `<button class="cf-del-btn" onclick="deleteCfMovimiento('${m.id}')" title="Eliminar">✕</button>`
       : '';
@@ -1601,7 +1639,7 @@ function renderCashflow() {
       <td style="color:var(--text-muted)">${m.proveedor}</td>
       <td class="amount" style="color:${amtColor}">${signo}${formatPeso(m.monto)}</td>
       <td><span class="badge ${estadoCls}">${m.estado}</span></td>
-      <td style="width:28px;text-align:center">${delBtn}</td>
+      <td style="width:44px;text-align:right;white-space:nowrap">${editBtn}${delBtn}</td>
     </tr>`;
   }).join('');
 

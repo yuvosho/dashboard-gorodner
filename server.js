@@ -202,6 +202,28 @@ app.post('/api/obras/:id/cashflow', auth, (req, res) => {
   res.json({ ok: true, mov, data });
 });
 
+// Editar movimiento de cashflow por índice en el array
+app.put('/api/obras/:id/cashflow/:idx', auth, (req, res) => {
+  const data    = readData();
+  const obraIdx = data.obras.findIndex(o => o.id === req.params.id);
+  if (obraIdx < 0) return res.status(404).json({ error: 'Obra no encontrada' });
+
+  const cf     = data.obras[obraIdx].cashflow || [];
+  const movIdx = parseInt(req.params.idx, 10);
+  if (isNaN(movIdx) || movIdx < 0 || movIdx >= cf.length) return res.status(404).json({ error: 'Movimiento no encontrado' });
+
+  const { fecha, tipo, rubro, desc, proveedor, monto, estado } = req.body;
+  if (!fecha || !tipo || !monto) return res.status(400).json({ error: 'Faltan datos obligatorios' });
+
+  Object.assign(cf[movIdx], { fecha, tipo, rubro: rubro || '', desc: desc || '', proveedor: proveedor || '', monto: parseFloat(monto), estado: estado || 'Pendiente' });
+  data.obras[obraIdx].updatedAt = new Date().toISOString();
+  data.obras[obraIdx].updatedBy = req.user.username;
+
+  writeData(data);
+  console.log(`✏️  Movimiento cashflow editado por ${req.user.username} — obra "${data.obras[obraIdx].nombre}" idx ${movIdx}`);
+  res.json({ ok: true, data });
+});
+
 // Eliminar movimiento manual de cashflow
 app.delete('/api/obras/:id/cashflow/:movId', auth, (req, res) => {
   const data = readData();
