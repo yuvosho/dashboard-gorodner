@@ -610,15 +610,13 @@
         <label>Descripción</label>
         <input type="text" id="cf-desc" placeholder="Ej: Anticipo certificado 3">
       </div>
-      <div class="cf-field-row">
-        <div class="cf-field">
-          <label>Rubro</label>
-          <input type="text" id="cf-rubro" placeholder="Ej: 03-00">
-        </div>
-        <div class="cf-field">
-          <label>Proveedor</label>
-          <input type="text" id="cf-proveedor" placeholder="Ej: Contratista">
-        </div>
+      <div class="cf-field">
+        <label>Rubro</label>
+        <select id="cf-rubro"></select>
+      </div>
+      <div class="cf-field">
+        <label>Proveedor</label>
+        <select id="cf-proveedor"></select>
       </div>
       <div id="cf-modal-error" style="color:var(--terra);font-size:12px;min-height:16px;"></div>
     </div>
@@ -1420,15 +1418,44 @@ function toggleRubro(cod) {
 // ============================================================
 function openCfModal() {
   const today = new Date().toISOString().slice(0, 10);
-  document.getElementById('cf-fecha').value     = today;
-  document.getElementById('cf-tipo').value      = 'Ingreso';
-  document.getElementById('cf-monto').value     = '';
-  document.getElementById('cf-desc').value      = '';
-  document.getElementById('cf-rubro').value     = '';
-  document.getElementById('cf-proveedor').value = '';
-  document.getElementById('cf-estado').value    = 'Pendiente';
+  document.getElementById('cf-fecha').value  = today;
+  document.getElementById('cf-tipo').value   = 'Ingreso';
+  document.getElementById('cf-monto').value  = '';
+  document.getElementById('cf-desc').value   = '';
+  document.getElementById('cf-estado').value = 'Pendiente';
   document.getElementById('cf-modal-error').textContent = '';
   document.getElementById('cf-save-btn').disabled = false;
+
+  // Poblar select de rubros (principales + subrubros) desde la obra activa
+  const obra      = OBRAS.find(o => o.id === PRES_ID);
+  const rubros    = obra ? (obra.rubros || []) : [];
+  const rubroSel  = document.getElementById('cf-rubro');
+  rubroSel.innerHTML = '<option value="">— Sin rubro —</option>';
+  rubros.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value       = r.cod;
+    opt.textContent = `${r.cod} — ${r.desc}`;
+    rubroSel.appendChild(opt);
+    (r.items || []).forEach(sub => {
+      const subOpt = document.createElement('option');
+      subOpt.value       = sub.cod;
+      subOpt.textContent = `   ${sub.cod} — ${sub.desc}`;
+      rubroSel.appendChild(subOpt);
+    });
+  });
+
+  // Poblar select de proveedores desde obra.proveedores + nombres únicos del cashflow
+  const provNombres = new Set();
+  (obra && obra.proveedores || []).forEach(p => { if (p.nombre) provNombres.add(p.nombre); });
+  (obra && obra.cashflow    || []).forEach(m => { if (m.proveedor) provNombres.add(m.proveedor); });
+  const provSel = document.getElementById('cf-proveedor');
+  provSel.innerHTML = '<option value="">— Sin proveedor —</option>';
+  [...provNombres].sort().forEach(nombre => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = nombre;
+    provSel.appendChild(opt);
+  });
+
   document.getElementById('cf-modal-overlay').classList.remove('hidden');
   document.getElementById('cf-monto').focus();
 }
