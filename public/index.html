@@ -121,18 +121,28 @@
   }
   .btn-primary:hover { background: #b56a4a; }
   .btn-primary:disabled { background: var(--taupe); cursor: default; }
-  .cf-del-btn {
-    background: none; border: none; color: var(--text-muted); cursor: pointer;
-    font-size: 13px; padding: 2px 5px; border-radius: 4px; transition: color 0.15s, background 0.15s;
-    line-height: 1;
-  }
-  .cf-del-btn:hover { color: var(--terra); background: var(--terra-soft); }
+  .cf-menu-wrap { position: relative; display: inline-block; }
   .cf-edit-btn {
     background: none; border: none; color: var(--text-muted); cursor: pointer;
-    font-size: 15px; padding: 2px 5px; border-radius: 4px; transition: color 0.15s, background 0.15s;
+    font-size: 16px; padding: 3px 6px; border-radius: 4px; transition: color 0.15s, background 0.15s;
     line-height: 1; letter-spacing: -1px;
   }
   .cf-edit-btn:hover { color: var(--text); background: var(--border); }
+  .cf-menu {
+    position: absolute; right: 0; top: calc(100% + 2px); z-index: 200;
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 8px; box-shadow: 0 4px 16px rgba(60,50,40,0.13);
+    min-width: 120px; padding: 4px; white-space: nowrap;
+  }
+  .cf-menu.hidden { display: none; }
+  .cf-menu-item {
+    display: block; width: 100%; text-align: left; padding: 8px 12px;
+    font-size: 13px; font-family: inherit; background: none; border: none;
+    cursor: pointer; border-radius: 5px; color: var(--text); transition: background 0.12s;
+  }
+  .cf-menu-item:hover { background: var(--bg); }
+  .cf-menu-del { color: var(--terra); }
+  .cf-menu-del:hover { background: var(--terra-soft); }
 
   /* ======= LAYOUT ======= */
   .layout {
@@ -1012,7 +1022,28 @@ let PRES = { obra: '', cliente: '', rubros: [] };
 let PRES_ID = null; // id de la obra seleccionada en presupuesto
 
 const CF = { saldoInicial: 0, movimientos: [] };
-let CF_EDIT_IDX = null;
+let CF_EDIT_IDX  = null;
+let CF_MENU_OPEN = null;
+
+function toggleCfMenu(id) {
+  if (CF_MENU_OPEN && CF_MENU_OPEN !== id) {
+    const prev = document.getElementById(CF_MENU_OPEN);
+    if (prev) prev.classList.add('hidden');
+  }
+  const menu = document.getElementById(id);
+  if (!menu) return;
+  const closing = !menu.classList.contains('hidden');
+  menu.classList.toggle('hidden');
+  CF_MENU_OPEN = closing ? null : id;
+}
+
+document.addEventListener('click', () => {
+  if (CF_MENU_OPEN) {
+    const m = document.getElementById(CF_MENU_OPEN);
+    if (m) m.classList.add('hidden');
+    CF_MENU_OPEN = null;
+  }
+});
 
 // HTML del estado vacío
 function emptyState(msg) {
@@ -1627,10 +1658,17 @@ function renderCashflow() {
     const estadoCls = m.estado === 'Cobrado' ? 'cobrado' : m.estado === 'Pagado' ? 'pagado' : 'pendiente-cf';
     const signo     = m.tipo === 'Ingreso' ? '+' : '–';
     const amtColor  = m.tipo === 'Ingreso' ? 'var(--green-dark)' : 'var(--terra)';
-    const editBtn   = `<button class="cf-edit-btn" onclick="openCfEditModal(${origIdx})" title="Editar">⋮</button>`;
-    const delBtn    = m.manual && m.id
-      ? `<button class="cf-del-btn" onclick="deleteCfMovimiento('${m.id}')" title="Eliminar">✕</button>`
+    const menuId  = `cfm-${origIdx}`;
+    const delItem = m.manual && m.id
+      ? `<button class="cf-menu-item cf-menu-del" onclick="deleteCfMovimiento('${m.id}')">Eliminar</button>`
       : '';
+    const actionsCell = `<div class="cf-menu-wrap">
+      <button class="cf-edit-btn" onclick="event.stopPropagation();toggleCfMenu('${menuId}')">⋮</button>
+      <div class="cf-menu hidden" id="${menuId}">
+        <button class="cf-menu-item" onclick="openCfEditModal(${origIdx})">Editar</button>
+        ${delItem}
+      </div>
+    </div>`;
     return `<tr>
       <td style="white-space:nowrap;color:var(--text-muted)">${fmtF(m.fecha)}</td>
       <td><span class="${tipoCls}">${m.tipo}</span></td>
@@ -1639,7 +1677,7 @@ function renderCashflow() {
       <td style="color:var(--text-muted)">${m.proveedor}</td>
       <td class="amount" style="color:${amtColor}">${signo}${formatPeso(m.monto)}</td>
       <td><span class="badge ${estadoCls}">${m.estado}</span></td>
-      <td style="width:44px;text-align:right;white-space:nowrap">${editBtn}${delBtn}</td>
+      <td style="width:32px;text-align:center">${actionsCell}</td>
     </tr>`;
   }).join('');
 
