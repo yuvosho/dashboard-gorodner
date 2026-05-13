@@ -1,5 +1,7 @@
 node_modules/
 uploads/
 data/data.json
+data/users.json
+package-lock.json
 .env
 *.log
