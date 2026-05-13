@@ -756,8 +756,9 @@
     /* ── BOTONES "+ Agregar" inline: se ocultan en mobile, el FAB global los reemplaza ── */
     .fab-add { display: none !important; }
 
-    /* ── FAB GLOBAL mobile: hijo directo de <body> para evitar bug iOS Safari (overflow:hidden + position:fixed) ── */
+    /* ── FABs mobile: hijos directos de <body> para evitar bug iOS Safari (overflow:hidden + position:fixed) ── */
     .mobile-fab {
+      display: none;
       position: fixed;
       right: 16px;
       bottom: calc(80px + env(safe-area-inset-bottom, 0px));
@@ -772,7 +773,6 @@
       line-height: 1;
       cursor: pointer;
       box-shadow: 0 6px 20px rgba(201, 123, 91, 0.45);
-      display: flex;
       align-items: center;
       justify-content: center;
       padding: 0;
@@ -780,10 +780,16 @@
       transition: transform 0.15s, background 0.15s;
     }
     .mobile-fab:active { transform: scale(0.94); background: #b56a4a; }
-    .mobile-fab[hidden] { display: none !important; }
+    /* Visibilidad por tab activo, controlada via data-attribute en body */
+    body[data-active-tab="cashflow"]    #fab-cashflow,
+    body[data-active-tab="proveedores"] #fab-proveedores {
+      display: flex;
+    }
+    /* Si no hay obra seleccionada, esconder ambos */
+    body[data-no-pres="1"] .mobile-fab { display: none !important; }
   }
 
-  /* En desktop nunca se muestra el FAB global */
+  /* En desktop nunca se muestran los FABs */
   @media (min-width: 781px) {
     .mobile-fab { display: none !important; }
   }
@@ -939,8 +945,9 @@
   </div>
 </div>
 
-<!-- ======= FAB GLOBAL (mobile) — fuera de .layout para evitar bug de overflow:hidden + position:fixed en iOS Safari ======= -->
-<button type="button" id="mobile-fab" class="mobile-fab" aria-label="Agregar" hidden>+</button>
+<!-- ======= FABs MOBILE — fuera de .layout para evitar bug de overflow:hidden + position:fixed en iOS Safari ======= -->
+<button type="button" id="fab-cashflow" class="mobile-fab" onclick="openCfModal()" aria-label="Agregar movimiento">+</button>
+<button type="button" id="fab-proveedores" class="mobile-fab" onclick="openProvModal()" aria-label="Agregar proveedor">+</button>
 
 <div class="layout">
 
@@ -2527,22 +2534,8 @@ function getActiveTab() {
 }
 
 function updateMobileFab() {
-  const fab = document.getElementById('mobile-fab');
-  if (!fab) return;
-  const tab = getActiveTab();
-  if (!PRES_ID || (tab !== 'cashflow' && tab !== 'proveedores')) {
-    fab.hidden = true;
-    fab.onclick = null;
-    return;
-  }
-  if (tab === 'cashflow') {
-    fab.setAttribute('aria-label', 'Agregar movimiento');
-    fab.onclick = () => openCfModal();
-  } else {
-    fab.setAttribute('aria-label', 'Agregar proveedor');
-    fab.onclick = () => openProvModal();
-  }
-  fab.hidden = false;
+  document.body.dataset.activeTab = getActiveTab();
+  document.body.dataset.noPres = PRES_ID ? '0' : '1';
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -2557,6 +2550,10 @@ document.querySelectorAll('.nav-item').forEach(item => {
     updateMobileFab();
   });
 });
+
+// Inicializar tab activo en body al cargar
+document.body.dataset.activeTab = getActiveTab();
+document.body.dataset.noPres = '1';
 
 // ============================================================
 // INICIO — verificar token y cargar datos
