@@ -453,36 +453,49 @@
     .kpi-row-4 { flex-wrap: wrap; }
     .middle      { grid-template-columns: 1fr; }
     .middle-wide { grid-template-columns: 1fr; }
+    .main { padding: 18px 22px 24px; }
   }
 
-  /* RESPONSIVE — MOBILE */
+  /* ============================================================
+     RESPONSIVE — MOBILE (≤ 780px)
+     ============================================================ */
   @media (max-width: 780px) {
-    /* Layout base */
+    html, body { font-size: 14px; }
+    body { -webkit-tap-highlight-color: transparent; }
+
+    /* ── LAYOUT ── */
     .layout {
       grid-template-columns: 1fr;
-      padding-bottom: 70px; /* espacio para la barra inferior */
+      padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+    .main {
+      padding: 14px 14px 20px;
+      gap: 14px;
     }
 
-    /* ── SIDEBAR → BARRA INFERIOR ── */
+    /* ── SIDEBAR → BOTTOM NAV ── */
     .sidebar {
-      display: flex !important;
       flex-direction: row;
       position: fixed;
       bottom: 0; left: 0; right: 0;
+      top: auto;
       height: auto;
       width: 100%;
-      padding: 6px 4px env(safe-area-inset-bottom, 6px);
+      padding: 6px 4px;
+      padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
       gap: 0;
       z-index: 200;
       border-top: 1px solid var(--border);
       border-right: none;
-      box-shadow: 0 -2px 16px rgba(60,50,40,0.12);
+      box-shadow: 0 -3px 18px rgba(60,50,40,0.10);
       overflow-x: auto;
       overflow-y: hidden;
-      top: auto;
-      height: auto;
       justify-content: space-around;
+      backdrop-filter: blur(8px);
+      background: rgba(242, 235, 224, 0.96);
+      scrollbar-width: none;
     }
+    .sidebar::-webkit-scrollbar { display: none; }
     .sidebar-logo,
     .sidebar-footer,
     .nav-group-label { display: none !important; }
@@ -491,89 +504,275 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
-      padding: 6px 4px 4px;
-      font-size: 9.5px;
-      min-width: 48px;
+      gap: 2px;
+      padding: 7px 6px 5px;
+      font-size: 10px;
+      font-weight: 500;
+      min-width: 56px;
       flex: 1;
-      border-radius: 8px;
+      border-radius: 10px;
       white-space: nowrap;
+      letter-spacing: 0;
     }
-    .nav-item svg { width: 19px; height: 19px; }
+    .nav-item svg { width: 20px; height: 20px; }
+    .nav-item.active {
+      background: var(--terra-soft);
+      color: var(--terra);
+      font-weight: 700;
+    }
 
-    /* ── TOPBAR ── */
-    .main { padding: 12px 14px 16px; }
-    .topbar { flex-wrap: nowrap; gap: 8px; padding-bottom: 12px; }
-    .page-title { font-size: 15px; }
+    /* ── TOPBAR compacto ── */
+    .topbar {
+      flex-wrap: nowrap;
+      gap: 8px;
+      padding-bottom: 10px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 50;
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    .page-title { font-size: 17px; }
     .topbar-user { display: none; }
-    /* Botón subir: solo icono */
+    .topbar-right { gap: 6px; }
     .upload-label {
-      padding: 8px 10px;
+      padding: 9px 12px;
       gap: 0;
-      font-size: 0; /* ocultar texto */
+      font-size: 0;
     }
     .upload-label svg { width: 16px; height: 16px; margin: 0; }
-    .logout-btn { padding: 8px 10px; font-size: 12px; }
+    .logout-btn {
+      padding: 9px 12px;
+      font-size: 12px;
+    }
 
-    /* ── KPIs ── */
+    /* ── KPIs: 2 columnas ── */
+    .kpi-row, .kpi-row-4 { gap: 10px; }
     .kpi-row > .kpi,
-    .kpi-row-4 > .kpi { flex: 1 1 calc(50% - 10px); min-width: calc(50% - 10px); max-width: calc(50% - 10px); }
-    .kpi { padding: 12px 12px; gap: 9px; }
-    .kpi-icon { width: 34px; height: 34px; flex-shrink: 0; }
-    .kpi-icon svg { width: 15px; height: 15px; }
-    .kpi-value { font-size: 13px; }
+    .kpi-row-4 > .kpi {
+      flex: 1 1 calc(50% - 5px);
+      min-width: 0;
+      max-width: calc(50% - 5px);
+    }
+    .kpi {
+      padding: 12px 12px;
+      gap: 10px;
+      border-radius: 12px;
+    }
+    .kpi-icon { width: 36px; height: 36px; }
+    .kpi-icon svg { width: 16px; height: 16px; }
+    .kpi-label { font-size: 9px; letter-spacing: 0.6px; }
+    .kpi-value { font-size: 14px; }
+    .kpi-sub { font-size: 10.5px; }
 
-    /* ── TABLAS: scroll horizontal ── */
-    .panel { padding: 12px; }
+    /* ── PANELS ── */
+    .panel {
+      padding: 14px 12px;
+      border-radius: 10px;
+    }
+    .panel-title { font-size: 11.5px; margin-bottom: 10px; }
+
+    /* ── TAB HEADER ── */
+    .tab-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .obra-selector { width: 100%; }
+    .obra-selector select { min-width: 0; width: 100%; padding: 10px 32px 10px 12px; font-size: 14px; }
+
+    /* ── TABLAS: scroll horizontal con indicador ── */
     .panel > table,
-    .panel > * > table { /* tablas directo o en un sub-wrapper */
+    .panel > * > table {
       display: block;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       white-space: nowrap;
     }
-    /* Dentro de pres-root, cf-root, etc. */
     #pres-root .panel,
     #cf-root .panel,
     #prov-root .panel,
-    #datos-root .panel {
+    #datos-root .panel,
+    #obras-root .panel {
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
     #pres-root table,
     #cf-root table,
     #prov-root table,
-    #datos-root table {
+    #datos-root table,
+    #obras-root table {
       display: block;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       white-space: nowrap;
+      min-width: 100%;
     }
-
-    /* ── TAB HEADER con selector ── */
-    .tab-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .obra-selector { width: 100%; }
-    .obra-selector select { min-width: 0; width: 100%; }
+    thead th { font-size: 10px; padding: 9px 8px; }
+    tbody td { padding: 11px 8px; font-size: 13px; }
+    /* indicador sutil de scroll */
+    .panel { position: relative; }
 
     /* ── PCT bar compacta ── */
-    .pct-cell { min-width: 72px; }
-    .pct-bar  { max-width: 36px; }
+    .pct-cell { min-width: 88px; gap: 6px; }
+    .pct-bar  { max-width: 50px; height: 6px; }
+    .pct-text { font-size: 12px; min-width: 32px; }
 
-    /* ── Toast: centrado abajo, arriba de la barra ── */
-    .toast { bottom: 82px; right: 12px; left: 12px; text-align: center; }
+    /* ── BADGES más legibles ── */
+    .badge { font-size: 11.5px; padding: 4px 10px; }
 
-    /* ── Login ── */
-    .login-box { width: 90%; padding: 32px 24px 28px; }
+    /* ── MODALES como bottom sheets ── */
+    .cf-modal-overlay {
+      align-items: flex-end;
+    }
+    .cf-modal-box {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 16px 16px 0 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      animation: slideUp 0.22s ease-out;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    .cf-modal-header { padding: 16px 18px 14px; }
+    .cf-modal-title { font-size: 16px; }
+    .cf-modal-body { padding: 16px 18px; gap: 14px; }
+    .cf-modal-footer { padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 0px)); }
+    .cf-field input, .cf-field select {
+      padding: 12px 12px;
+      font-size: 15px;
+      border-radius: 9px;
+    }
+    .cf-field label { font-size: 10.5px; }
+    .cf-field-row { gap: 10px; }
+    /* drag indicator visual del bottom sheet */
+    .cf-modal-box::before {
+      content: "";
+      display: block;
+      width: 38px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 3px;
+      margin: 8px auto 2px;
+    }
+    .btn-primary, .btn-secondary {
+      padding: 11px 18px;
+      font-size: 14px;
+      border-radius: 9px;
+      min-height: 44px;
+    }
+    .cf-modal-close { font-size: 22px; padding: 4px 10px; }
 
-    /* ── Datos tab: inputs full width ── */
-    .datos-select { min-width: 0; width: 100%; }
+    /* ── CONFIRM dialog ── */
+    .cf-confirm-box {
+      border-radius: 14px;
+      padding: 26px 24px;
+      max-width: none;
+      width: calc(100% - 32px);
+    }
+    .cf-confirm-msg { font-size: 15px; }
+    .cf-confirm-btns .btn-primary,
+    .cf-confirm-btns .btn-secondary { flex: 1; }
+
+    /* ── MENÚ contextual (⋮) ── */
+    .cf-edit-btn { font-size: 22px; padding: 6px 10px; }
+    .cf-menu { min-width: 140px; }
+    .cf-menu-item { padding: 11px 14px; font-size: 14px; }
+
+    /* ── TOAST ── */
+    .toast {
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+      right: 12px; left: 12px;
+      text-align: center;
+      font-size: 13px;
+      padding: 13px 18px;
+      border-radius: 10px;
+    }
+
+    /* ── LOGIN ── */
+    .login-box {
+      width: calc(100% - 32px);
+      max-width: 360px;
+      padding: 36px 24px 28px;
+      border-radius: 16px;
+    }
+    .login-field input { padding: 12px 14px; font-size: 15px; }
+    .login-btn { padding: 13px; font-size: 15px; min-height: 48px; }
+
+    /* ── TAB DATOS: botones más amplios ── */
+    .datos-btn {
+      padding: 8px 14px;
+      font-size: 12.5px;
+      min-height: 36px;
+    }
+    .datos-select { min-width: 0; width: 100%; padding: 10px 32px 10px 12px; font-size: 14px; }
+    .datos-input { padding: 8px 10px; font-size: 13.5px; }
+    .merge-btn { width: 100%; justify-content: center; padding: 11px 18px; font-size: 13px; }
+
+    /* ── CHARTS: aprovechar todo el ancho ── */
+    .chart-wrap { margin: 0 -2px; }
+    .chart-wrap svg { width: 100%; height: auto; }
+
+    /* ── STAT LIST ── */
+    .stat-item { font-size: 13px; padding: 12px 0; }
+
+    /* ── BANNERS ── */
+    .demo-banner, .data-banner { font-size: 12px; padding: 9px 12px; }
+
+    /* ── BOTÓN "+ Agregar movimiento/proveedor" como FAB ── */
+    .fab-add {
+      position: fixed !important;
+      right: 16px;
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+      z-index: 150;
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      padding: 0 !important;
+      font-size: 0 !important;
+      box-shadow: 0 6px 20px rgba(201, 123, 91, 0.45);
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+    .fab-add::before {
+      content: "+";
+      font-size: 30px;
+      font-weight: 300;
+      color: #fff;
+      line-height: 1;
+    }
   }
 
-  /* iPhones con notch/Dynamic Island */
-  @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    @media (max-width: 780px) {
-      .layout { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
-      .sidebar { padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
-    }
+  /* ============================================================
+     RESPONSIVE — MOBILE EXTRA-CHICO (≤ 380px)
+     ============================================================ */
+  @media (max-width: 380px) {
+    html, body { font-size: 13.5px; }
+    .main { padding: 12px 10px 18px; }
+    .panel { padding: 12px 10px; }
+    .kpi { padding: 10px 10px; gap: 8px; }
+    .kpi-icon { width: 32px; height: 32px; }
+    .kpi-value { font-size: 13px; }
+    .page-title { font-size: 16px; }
+    .nav-item { font-size: 9.5px; min-width: 48px; padding: 6px 3px 4px; }
+    .nav-item svg { width: 18px; height: 18px; }
+    thead th { font-size: 9.5px; padding: 8px 6px; }
+    tbody td { padding: 10px 6px; font-size: 12.5px; }
+  }
+
+  /* ============================================================
+     RESPONSIVE — LANDSCAPE bajo (notch horizontal)
+     ============================================================ */
+  @media (max-width: 900px) and (orientation: landscape) and (max-height: 480px) {
+    .layout { padding-bottom: 60px; }
+    .sidebar { padding: 4px 4px; }
+    .nav-item { padding: 5px 4px 3px; font-size: 9.5px; }
+    .topbar { position: relative; }
   }
 </style>
 </head>
@@ -1679,7 +1878,7 @@ async function actuallyDeleteCf(idx) {
 
 function renderCashflow() {
   if (!CF.movimientos.length) {
-    $('cf-root').innerHTML = (PRES_ID ? `<div style="text-align:right;margin-bottom:10px"><button class="btn-primary" onclick="openCfModal()">+ Agregar movimiento</button></div>` : '') +
+    $('cf-root').innerHTML = (PRES_ID ? `<div style="text-align:right;margin-bottom:10px"><button class="btn-primary fab-add" onclick="openCfModal()">+ Agregar movimiento</button></div>` : '') +
       emptyState('Seleccioná una obra y usá <strong>+ Agregar movimiento</strong> o subí un Excel.');
     return;
   }
@@ -1842,7 +2041,7 @@ function renderCashflow() {
         <div class="tab-header">
           <div class="panel-title">Movimientos</div>
           <div style="display:flex;align-items:center;gap:12px">
-            ${PRES_ID ? `<button class="btn-primary" onclick="openCfModal()" style="padding:7px 14px;font-size:12px">+ Agregar</button>` : ''}
+            ${PRES_ID ? `<button class="btn-primary fab-add" onclick="openCfModal()" style="padding:7px 14px;font-size:12px">+ Agregar</button>` : ''}
             <div class="obra-selector"><span>Obra:</span><select id="sel-cashflow">${obraOpts}</select></div>
           </div>
         </div>
@@ -2080,7 +2279,7 @@ function renderProveedores() {
 
   const selectorRow = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
     <select id="sel-proveedores" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);font-size:13px;min-width:200px"></select>
-    ${PRES_ID ? `<button class="btn-primary" onclick="openProvModal()">+ Agregar proveedor</button>` : ''}
+    ${PRES_ID ? `<button class="btn-primary fab-add" onclick="openProvModal()">+ Agregar proveedor</button>` : ''}
   </div>`;
 
   if (!provs.length) {
