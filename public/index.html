@@ -1927,8 +1927,16 @@ async function actuallyDeleteCf(idx) {
 }
 
 function renderCashflow() {
+  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
+    DATOS.obras.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
+
+  const selectorRow = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <select id="sel-cashflow" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);font-size:13px;min-width:200px">${obraOpts}</select>
+    ${PRES_ID ? `<button class="btn-primary fab-add" onclick="openCfModal()">+ Agregar movimiento</button>` : ''}
+  </div>`;
+
   if (!CF.movimientos.length) {
-    $('cf-root').innerHTML = (PRES_ID ? `<div style="text-align:right;margin-bottom:10px"><button class="btn-primary fab-add" onclick="openCfModal()">+ Agregar movimiento</button></div>` : '') +
+    $('cf-root').innerHTML = selectorRow +
       emptyState('Seleccioná una obra y usá <strong>+ Agregar movimiento</strong> o subí un Excel.');
     return;
   }
@@ -2033,9 +2041,6 @@ function renderCashflow() {
     </tr>`;
   }).join('');
 
-  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
-    DATOS.obras.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
-
   const bannerHtml = window._lastUser
     ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
     : window._lastUpdate
@@ -2043,6 +2048,7 @@ function renderCashflow() {
     : `<div class="data-banner">✅ Datos cargados</div>`;
 
   $('cf-root').innerHTML = `
+    ${selectorRow}
     ${bannerHtml}
     <div class="kpi-row-4">
       <div class="kpi">
@@ -2088,13 +2094,7 @@ function renderCashflow() {
     </div>
     <div class="middle-wide">
       <div class="panel">
-        <div class="tab-header">
-          <div class="panel-title">Movimientos</div>
-          <div style="display:flex;align-items:center;gap:12px">
-            ${PRES_ID ? `<button class="btn-primary fab-add" onclick="openCfModal()" style="padding:7px 14px;font-size:12px">+ Agregar</button>` : ''}
-            <div class="obra-selector"><span>Obra:</span><select id="sel-cashflow">${obraOpts}</select></div>
-          </div>
-        </div>
+        <div class="panel-title">Movimientos</div>
         <table>
           <thead>
             <tr><th>Fecha</th><th>Tipo</th><th>Rubro</th><th>Descripción</th><th>Monto</th><th>Estado</th><th></th></tr>
