@@ -596,7 +596,6 @@
       max-width: 100%;
       min-width: 0;
       overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
     }
     .panel-title { font-size: 11.5px; margin-bottom: 10px; position: sticky; left: 0; }
 
@@ -756,13 +755,15 @@
     /* ── BOTONES "+ Agregar" inline: se ocultan en mobile, el FAB global los reemplaza ── */
     .fab-add { display: none !important; }
 
-    /* ── FABs mobile: hijos directos de <body> para evitar bug iOS Safari (overflow:hidden + position:fixed) ── */
+    /* ── FABs mobile: al final del body con stacking context propio para evitar problemas de capas GPU en iOS Safari ── */
     .mobile-fab {
       display: none;
       position: fixed;
       right: 16px;
       bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-      z-index: 300;
+      z-index: 9000;
+      isolation: isolate;
+      will-change: transform;
       width: 56px; height: 56px;
       border-radius: 50%;
       border: none;
@@ -944,10 +945,6 @@
     </div>
   </div>
 </div>
-
-<!-- ======= FABs MOBILE — fuera de .layout para evitar bug de overflow:hidden + position:fixed en iOS Safari ======= -->
-<button type="button" id="fab-cashflow" class="mobile-fab" onclick="openCfModal()" aria-label="Agregar movimiento">+</button>
-<button type="button" id="fab-proveedores" class="mobile-fab" onclick="openProvModal()" aria-label="Agregar proveedor">+</button>
 
 <div class="layout">
 
@@ -2566,5 +2563,10 @@ if (token) {
 // Si no hay token, la login-overlay ya está visible por defecto
 
 </script>
+
+<!-- ======= FABs MOBILE — al final del body para evitar problemas de capas GPU sobre el layout en iOS Safari ======= -->
+<button type="button" id="fab-cashflow" class="mobile-fab" onclick="openCfModal()" aria-label="Agregar movimiento">+</button>
+<button type="button" id="fab-proveedores" class="mobile-fab" onclick="openProvModal()" aria-label="Agregar proveedor">+</button>
+
 </body>
 </html>
