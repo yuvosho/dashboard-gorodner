@@ -462,8 +462,10 @@
   @media (max-width: 780px) {
     html, body {
       font-size: 14px;
-      overflow-x: hidden;
       max-width: 100vw;
+      /* NO usar overflow-x: hidden aca: en iOS Safari rompe position:fixed
+         (los elementos fijos quedan anclados al body y scrollean con la pagina).
+         El overflow horizontal se contiene en .layout/.main. */
     }
     body { -webkit-tap-highlight-color: transparent; }
 
@@ -596,7 +598,6 @@
       max-width: 100%;
       min-width: 0;
       overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
     }
     .panel-title { font-size: 11.5px; margin-bottom: 10px; position: sticky; left: 0; }
 
@@ -753,28 +754,47 @@
     /* ── BANNERS ── */
     .demo-banner, .data-banner { font-size: 12px; padding: 9px 12px; }
 
-    /* ── BOTÓN "+ Agregar movimiento/proveedor" como FAB ── */
-    .fab-add {
-      position: fixed !important;
+    /* ── BOTONES "+ Agregar" inline: se ocultan en mobile, el FAB global los reemplaza ── */
+    .fab-add { display: none !important; }
+
+    /* ── FABs mobile: al final del body con stacking context propio para evitar problemas de capas GPU en iOS Safari ── */
+    .mobile-fab {
+      display: none;
+      position: fixed;
       right: 16px;
-      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-      z-index: 150;
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+      z-index: 9000;
+      isolation: isolate;
+      will-change: transform;
       width: 56px; height: 56px;
       border-radius: 50%;
-      padding: 0 !important;
-      font-size: 0 !important;
+      border: none;
+      background: var(--terra);
+      color: #fff;
+      font-size: 32px;
+      font-weight: 300;
+      line-height: 1;
+      cursor: pointer;
       box-shadow: 0 6px 20px rgba(201, 123, 91, 0.45);
-      display: flex !important;
       align-items: center;
       justify-content: center;
+      padding: 0;
+      font-family: inherit;
+      transition: transform 0.15s, background 0.15s;
     }
-    .fab-add::before {
-      content: "+";
-      font-size: 30px;
-      font-weight: 300;
-      color: #fff;
-      line-height: 1;
+    .mobile-fab:active { transform: scale(0.94); background: #b56a4a; }
+    /* Visibilidad por tab activo, controlada via data-attribute en body */
+    body[data-active-tab="cashflow"]    #fab-cashflow,
+    body[data-active-tab="proveedores"] #fab-proveedores {
+      display: flex;
     }
+    /* Si no hay obra seleccionada, esconder ambos */
+    body[data-no-pres="1"] .mobile-fab { display: none !important; }
+  }
+
+  /* En desktop nunca se muestran los FABs */
+  @media (min-width: 781px) {
+    .mobile-fab { display: none !important; }
   }
 
   /* ============================================================
@@ -1906,8 +1926,16 @@ async function actuallyDeleteCf(idx) {
 }
 
 function renderCashflow() {
+  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
+    DATOS.obras.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
+
+  const selectorRow = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <select id="sel-cashflow" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);font-size:13px;min-width:200px">${obraOpts}</select>
+    ${PRES_ID ? `<button class="btn-primary fab-add" onclick="openCfModal()">+ Agregar movimiento</button>` : ''}
+  </div>`;
+
   if (!CF.movimientos.length) {
-    $('cf-root').innerHTML = (PRES_ID ? `<div style="text-align:right;margin-bottom:10px"><button class="btn-primary fab-add" onclick="openCfModal()">+ Agregar movimiento</button></div>` : '') +
+    $('cf-root').innerHTML = selectorRow +
       emptyState('Seleccioná una obra y usá <strong>+ Agregar movimiento</strong> o subí un Excel.');
     return;
   }
@@ -2012,9 +2040,6 @@ function renderCashflow() {
     </tr>`;
   }).join('');
 
-  const obraOpts = '<option value="">— Seleccionar obra —</option>' +
-    DATOS.obras.map(o => `<option value="${o.id}" ${o.id === PRES_ID ? 'selected' : ''}>${o.nombre}</option>`).join('');
-
   const bannerHtml = window._lastUser
     ? `<div class="data-banner">✅ Datos reales — subido por <strong>${window._lastUser}</strong> el ${window._lastUpdate}</div>`
     : window._lastUpdate
@@ -2022,6 +2047,7 @@ function renderCashflow() {
     : `<div class="data-banner">✅ Datos cargados</div>`;
 
   $('cf-root').innerHTML = `
+    ${selectorRow}
     ${bannerHtml}
     <div class="kpi-row-4">
       <div class="kpi">
@@ -2067,13 +2093,7 @@ function renderCashflow() {
     </div>
     <div class="middle-wide">
       <div class="panel">
-        <div class="tab-header">
-          <div class="panel-title">Movimientos</div>
-          <div style="display:flex;align-items:center;gap:12px">
-            ${PRES_ID ? `<button class="btn-primary fab-add" onclick="openCfModal()" style="padding:7px 14px;font-size:12px">+ Agregar</button>` : ''}
-            <div class="obra-selector"><span>Obra:</span><select id="sel-cashflow">${obraOpts}</select></div>
-          </div>
-        </div>
+        <div class="panel-title">Movimientos</div>
         <table>
           <thead>
             <tr><th>Fecha</th><th>Tipo</th><th>Rubro</th><th>Descripción</th><th>Monto</th><th>Estado</th><th></th></tr>
@@ -2479,6 +2499,7 @@ function renderAll() {
   renderProveedores();
   renderDatos();
   poblarSelectores();
+  updateMobileFab();
 }
 
 // ============================================================
@@ -2498,6 +2519,7 @@ document.addEventListener('change', function(e) {
       if      (e.target.id === 'sel-presupuesto') renderPresupuesto();
       else if (e.target.id === 'sel-cashflow')    renderCashflow();
       else                                        renderProveedores();
+      updateMobileFab();
     }
   }
 });
@@ -2505,6 +2527,16 @@ document.addEventListener('change', function(e) {
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
+function getActiveTab() {
+  const el = document.querySelector('.nav-item.active');
+  return el ? el.dataset.tab : 'dashboard';
+}
+
+function updateMobileFab() {
+  document.body.dataset.activeTab = getActiveTab();
+  document.body.dataset.noPres = PRES_ID ? '0' : '1';
+}
+
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', function(e) {
     e.preventDefault();
@@ -2514,8 +2546,13 @@ document.querySelectorAll('.nav-item').forEach(item => {
     document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
     $('tab-' + tab).classList.add('active');
     $('page-title').textContent = TAB_NAMES[tab] || tab;
+    updateMobileFab();
   });
 });
+
+// Inicializar tab activo en body al cargar
+document.body.dataset.activeTab = getActiveTab();
+document.body.dataset.noPres = '1';
 
 // ============================================================
 // INICIO — verificar token y cargar datos
@@ -2528,5 +2565,10 @@ if (token) {
 // Si no hay token, la login-overlay ya está visible por defecto
 
 </script>
+
+<!-- ======= FABs MOBILE — al final del body para evitar problemas de capas GPU en iOS Safari ======= -->
+<button type="button" id="fab-cashflow" class="mobile-fab" onclick="openCfModal()" aria-label="Agregar movimiento">+</button>
+<button type="button" id="fab-proveedores" class="mobile-fab" onclick="openProvModal()" aria-label="Agregar proveedor">+</button>
+
 </body>
 </html>
