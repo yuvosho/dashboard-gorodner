@@ -782,7 +782,6 @@
     }
     .mobile-fab:active { transform: scale(0.94); background: #b56a4a; }
     /* Visibilidad por tab activo, controlada via data-attribute en body */
-    body[data-active-tab="cashflow"]    #fab-cashflow,
     body[data-active-tab="proveedores"] #fab-proveedores {
       display: flex;
     }
@@ -1929,7 +1928,7 @@ function renderCashflow() {
 
   const selectorRow = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
     <select id="sel-cashflow" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);font-size:13px;min-width:200px">${obraOpts}</select>
-    ${PRES_ID ? `<button class="btn-primary fab-add" onclick="openCfModal()">+ Agregar movimiento</button>` : ''}
+    ${PRES_ID ? `<button class="btn-primary" onclick="openCfModal()" style="position:relative;z-index:10">+ Agregar movimiento</button>` : ''}
   </div>`;
 
   if (!CF.movimientos.length) {
@@ -2564,8 +2563,7 @@ if (token) {
 
 </script>
 
-<!-- ======= FABs MOBILE — al final del body para evitar problemas de capas GPU sobre el layout en iOS Safari ======= -->
-<button type="button" id="fab-cashflow" class="mobile-fab" onclick="openCfModal()" aria-label="Agregar movimiento">+</button>
+<!-- ======= FAB MOBILE PROVEEDORES — al final del body para evitar problemas de capas GPU en iOS Safari ======= -->
 <button type="button" id="fab-proveedores" class="mobile-fab" onclick="openProvModal()" aria-label="Agregar proveedor">+</button>
 
 </body>
